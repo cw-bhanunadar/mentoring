@@ -9,16 +9,52 @@ body{
     font-weight: 400;
 }
 .footer{
+    position: fixed;
+    bottom: 0%;
+    margin-left: 35%;
+    text-align: center;
     color: white;
     font-size:0.9em;
 }
 .form{
-   
-    height:200px;
-    
+   position: absolute;
+   top:50%;
+   left:50%;
+    margin: -150px 0 0 -150px;
+	width:300px;
+	height:300px;
     opacity: 0.5;
     text-align: center;
 }
 .footer p a{
     color: #d20962;
+}
+.form input{
+    padding: 10px;
+    border: none ;
+    margin-bottom:10px;
+    width:100%;
+
+ }
+.form a{
+    color:whitesmoke;
+    opacity: 1;
+}
+.submit{
+    opacity: 1;
+}
+@media(max-width:720px)
+{
+    .form{
+        position: absolute;
+   top:50%;
+   left:50%;
+    margin: -75px 0 0 -75px;
+	width:150px;
+	height:150px;
+    }
+.Login h1{
+    letter-spacing: 2px;
+    font-weight: 400;
+}
 }
