@@ -1,0 +1,24 @@
+.upper {
+    background: url("../img/student_website.jpg") no-repeat 0% 87% fixed;
+    background-size:cover;
+    height:70%;
+    position:relative;
+}
+.Header{
+    position: absolute;
+}
+.Header h1{
+    letter-spacing: 3px;
+    text-shadow: black;
+    font-weight: 400;
+    padding-left: 15px;
+}
+#text_slide{
+    position: absolute;
+    left:30px;
+    bottom:160px;
+    color:#FD7208;
+    font-size: 50px;
+    font-weight: 400;
+
+}

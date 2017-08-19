@@ -43,6 +43,7 @@ body{
 .submit{
     opacity: 1;
 }
+
 @media(max-width:720px)
 {
     .form{
