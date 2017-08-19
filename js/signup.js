@@ -27,6 +27,9 @@ $(document).ready(function(){
     var i=0;
     setInterval(function() {
     $("#text_slide").html(quotes[i]);
+    
+     $("#text_slide").animate({left:"200px"},5000);
+    $("#text_slide").animate({left:"-200px"},5000);
     if (i == quotes.length) {
         i = 0;
     }
