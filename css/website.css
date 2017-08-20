@@ -37,3 +37,11 @@
 #content p{
     font-style: italic;
 }
+.top-bar{
+    text-align: center;
+}
+.col-md-4 img{
+    padding-bottom:10px;
+    padding-top:10px;
+    
+}

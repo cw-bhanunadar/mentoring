@@ -80,5 +80,5 @@ $(document).ready(function(){
         i++;
     }
 }, 5 * 1000);
-
+    
 });
