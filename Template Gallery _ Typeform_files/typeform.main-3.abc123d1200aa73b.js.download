@@ -1,0 +1,660 @@
+/*
+# Dialogs: Sobreescribir default variables para traducciones
+window.dialogDefaults = {
+	alert: {
+		okLabel: translate("messages.alert-ok")
+	},
+	confirm: {
+		okLabel: translate("messages.confirm-ok"),
+		cancelLabel: translate("messages.confirm-cancel")
+	}
+};
+*/
+
+(function($, window) {
+  var ALERT, CONFIRM, Dialog, FORM, FULLSCREEN, POPUP;
+  ALERT = 0;
+  CONFIRM = 1;
+  FORM = 2;
+  POPUP = 3;
+  FULLSCREEN = 4;
+  Dialog = (function() {
+    var topWindow, type;
+
+    type = ALERT;
+
+    topWindow = window.top;
+
+    Dialog.prototype.template = {
+      0: "<div id='dialog-wrapper'><div id='outer'><div id='dialog'>#title#<div class='content'>#content#</div><div class='buttons'>#ok#<div class='clear'></div></div></div></div></div>",
+      1: "<div id='dialog-wrapper'><div id='outer'><div id='dialog'>#icon# #title#<div class='content'>#content#</div><div class='buttons'>#ok##cancel#<div class='clear'></div></div></div></div></div>",
+      2: "<div id='dialog-wrapper' class='form'><div id='outer'><div id='dialog'>#title#<div class='content'>#content#</div><div class='clear'></div><div class='buttons'>#ok##cancel#<div class='clear'></div></div></div></div></div>",
+      3: "<div id='dialog-wrapper' class='form'><div id='outer'><div id='dialog' class='custom-popup'>#title#<div class='content' style='height: 100%;'>#content#</div></div></div></div></div></div></div>",
+      4: "<div id='dialog-wrapper' class='fullscreen'> <div id='outer'> <div id='dialog'>#title#<div class='content'>#content#</div> </div> <div class='fullscreen-bg'></div></div> <div class='spinner'></div> </div>",
+      "button": "<a href='#' id='#id#' class='admin-button #class#'><span class='label'>#label#</span><span class='spinner'></span></a>",
+      "close-button": "<img class='close-button' src='https://s3-eu-west-1.amazonaws.com/share.typeform.com/close.gif'>"
+    };
+
+    Dialog.prototype.defaults = {
+      title: "",
+      content: "",
+      okLabel: "Ok",
+      okCallback: function() {},
+      koCallback: function() {},
+      cancelLabel: "Cancel",
+      cancelCallback: function() {},
+      onShow: function($el) {},
+      closedCallback: function() {},
+      width: 400,
+      closeButton: false,
+      spinnerColor: "#62858C",
+      canCloseWithClick: true,
+      className: "",
+      callAjax: "",
+      dataAjax: {},
+      initAjax: function() {},
+      cleanUrlHashOnClose: true
+    };
+
+    function Dialog(type, options) {
+      var $dialog, appDefaults, buttonCancel, buttonOK, content, dialogWrapper, iconClass, iconEl, iconSize, self, title,
+        _this = this;
+      self = this;
+      this.type = type;
+      this.$topWindow = $(topWindow);
+      this.$topBody = $(topWindow.document.body);
+      this.$topDocument = $(topWindow.document);
+      if (window.dialogDefaults != null) {
+        if (this.type === ALERT) {
+          appDefaults = window.dialogDefaults.alert;
+        } else {
+          appDefaults = window.dialogDefaults.confirm;
+        }
+      }
+      this.options = $.extend({}, this.defaults, appDefaults);
+      this.options = $.extend({}, this.options, options);
+      if (this.type === ALERT) {
+        buttonOK = this.template["button"].replace("#id#", "dialog-ok").replace("#class#", "turquoise").replace("#label#", this.options.okLabel);
+        buttonCancel = "";
+      } else if (this.type === CONFIRM || this.type === FORM) {
+        buttonOK = this.template["button"].replace("#id#", "dialog-ok").replace("#class#", "turquoise").replace("#label#", this.options.okLabel);
+        buttonCancel = this.template["button"].replace("#id#", "dialog-cancel").replace("#class#", "gray").replace("#label#", this.options.cancelLabel);
+      }
+      title = this.options.title || "";
+      if (title !== "") {
+        title = "<h1>" + title + "</h1>";
+      }
+      content = this.options.content || "";
+      dialogWrapper = this.template[this.type].replace("#title#", title).replace("#content#", content);
+      if (this.options.hideButtons) {
+        dialogWrapper = dialogWrapper.replace("#ok#", '').replace("#cancel#", '');
+      } else {
+        dialogWrapper = dialogWrapper.replace("#ok#", buttonOK).replace("#cancel#", buttonCancel);
+      }
+      if (this.options.icon !== void 0) {
+        iconSize = 44;
+        iconClass = 'dialog-icon';
+        iconEl = "<img src='" + this.options.icon + "' width='" + iconSize + "' height='" + iconSize + "' class='" + iconClass + "' />";
+        dialogWrapper = dialogWrapper.replace('#icon#', iconEl);
+      } else {
+        dialogWrapper = dialogWrapper.replace('#icon#', '');
+      }
+      this.$dialogWrapper = $("#dialog-wrapper");
+      if (this.$dialogWrapper.length) {
+        this.$dialogWrapper.remove();
+      }
+      this.$dialogWrapper = $(dialogWrapper);
+      this.$topBody.append(this.$dialogWrapper);
+      if (this.options.callAjax.length) {
+        Typeform.Spinner(this.$dialogWrapper.children('.spinner'), {
+          color: this.options.spinnerColor
+        });
+        $('body').addClass('loading-dialog');
+        $.ajax(this.options.callAjax, {
+          type: 'GET',
+          data: this.options.dataAjax,
+          async: true,
+          error: function(r, textStatus) {
+            return notify.error(textStatus);
+          },
+          success: function(data) {
+            self.$dialogWrapper.find(".content").append(data);
+            return _.defer(function() {
+              self.$dialogWrapper.find('.tooltip').tooltip();
+              return self.options.initAjax();
+            });
+          },
+          complete: function() {
+            return _.defer(function() {
+              return $('body').removeClass('loading-dialog');
+            });
+          }
+        });
+      }
+      if (this.options.className.length) {
+        this.$dialogWrapper.addClass(this.options.className);
+      }
+      this.$topDocument.on("click.dialog", "#dialog-ok", function() {
+        if (self.type === FORM) {
+          self.$dialogWrapper.find("form").submit();
+        } else {
+          self.close();
+          self.options.okCallback();
+        }
+        return false;
+      });
+      this.$topDocument.on("click.dialog", "#dialog-cancel", function() {
+        self.close();
+        self.options.cancelCallback();
+        return false;
+      });
+      this.$topDocument.on("dialog-close.dialog", function() {
+        self.close();
+        self.options.cancelCallback();
+        return false;
+      });
+      this.$topDocument.on("click.dialog", ".fullscreen-bg", function() {
+        if (self.options.canCloseWithClick) {
+          self.close();
+          self.options.cancelCallback();
+          return false;
+        }
+      });
+      this.$topDocument.on("keydown.dialog keyup.dialog", function(e) {
+        var $btn, key;
+        key = e.which;
+        if (key === 27 || key === 13) {
+          if (key === 27) {
+            $btn = self.$dialogWrapper.find("#dialog-cancel");
+          }
+          if (key === 13) {
+            $btn = self.$dialogWrapper.find("#dialog-ok");
+          }
+          if (e.type === "keydown") {
+            $btn.addClass("active");
+          } else {
+            $btn.removeClass("active");
+            $btn.click();
+          }
+          return false;
+        }
+      });
+      this.$topDocument.on("keydown.dialog keyup.dialog", "textarea", function(e) {
+        return e.stopPropagation();
+      });
+      if (this.type !== FULLSCREEN) {
+        this.$topDocument.on("click.dialog", "#dialog-wrapper", function(e) {
+          var $el;
+          $el = $(e.srcElement);
+          if ($el.is("a")) {
+            if (typeof ($el.attr('target')) === "undefined") {
+              self.close();
+            }
+          } else {
+            if (e.target.id === "dialog-wrapper" && _this.type !== ALERT) {
+              self.close();
+            }
+            false;
+          }
+        });
+      }
+      if (this.type === FULLSCREEN && this.options.width !== 400) {
+        $dialog = this.$dialogWrapper.find("#dialog");
+        $dialog.css({
+          width: this.options.width
+        });
+      }
+      if (this.type === FORM) {
+        self.prepareForm();
+      }
+      if (this.options.closeButton) {
+        this.$closeButton = $(this.template["close-button"]);
+        this.$dialogWrapper.append(this.$closeButton);
+        this.$topDocument.on("click.dialog", ".close-button,.close-dialog", function() {
+          return _this.close();
+        });
+      }
+      this.resize();
+      this.$topWindow.on("resize.dialog", function() {
+        return _this.resize();
+      });
+      _.defer(function() {
+        _this.$topBody.addClass("dialog-show");
+        _this.options.onShow(_this.$dialogWrapper);
+        return _this.$dialogWrapper.find('.tooltip').tooltip();
+      });
+    }
+
+    Dialog.prototype._clearUrlHashLocation = function() {
+      if (window.location.hash !== '') {
+        return window.location.hash = '';
+      }
+    };
+
+    Dialog.prototype.close = function() {
+      var $dialogWrapper,
+        _this = this;
+      $dialogWrapper = this.$dialogWrapper;
+      this.$topBody.removeClass("dialog-show").on('transitionend webkitTransitionEnd oTransitionEnd otransitionend msTransitionEnd', function() {
+        return $dialogWrapper.remove();
+      });
+      if (!this.supportsTransitions()) {
+        $dialogWrapper.remove();
+      }
+      this.$topDocument.off(".dialog");
+      this.$topWindow.off(".dialog");
+      if (this.options.cleanUrlHashOnClose) {
+        this._clearUrlHashLocation();
+      }
+      _.defer(function() {
+        return _this.options.closedCallback();
+      });
+      tf.services.userBehaviour.trackPopupClosed();
+      return false;
+    };
+
+    Dialog.prototype.resize = function() {
+      var $dialog, dH, wH;
+      if (this.type === FULLSCREEN) {
+        return;
+      }
+      $dialog = this.$dialogWrapper.find("#outer");
+      $dialog.css({
+        width: this.options.width,
+        height: ""
+      });
+      wH = this.$topWindow.innerHeight();
+      dH = $dialog.outerHeight();
+      if (dH > wH - 20) {
+        dH = wH - 20;
+      }
+      $dialog.css({
+        height: dH - 8,
+        top: (wH - dH) / 2,
+        left: this.$topWindow.innerWidth() / 2 - this.options.width / 2
+      });
+      if (this.options.closeButton) {
+        return this.$closeButton.css({
+          top: (wH - dH) / 2 - 25,
+          left: this.$topWindow.innerWidth() / 2 + this.options.width / 2 + 15
+        });
+      }
+    };
+
+    Dialog.prototype.supportsTransitions = function() {
+      var b, i, p, s, v;
+      b = document.body || document.documentElement;
+      s = b.style;
+      p = 'transition';
+      if (typeof s[p] === 'string') {
+        return true;
+      }
+      v = ['Moz', 'Webkit', 'Khtml', 'O', 'ms'];
+      p = p.charAt(0).toUpperCase() + p.substr(1);
+      i = 0;
+      while (i < v.length) {
+        if (typeof s[v[i] + p] === 'string') {
+          return true;
+        }
+        i++;
+      }
+      return false;
+    };
+
+    Dialog.prototype.prepareForm = function() {
+      var $form, $genericError, $okButton, clearError, displayError, requestError, requestSuccess, self,
+        _this = this;
+      self = this;
+      $form = this.$dialogWrapper.find("form");
+      if (!$form.any()) {
+        return;
+      }
+      $okButton = self.$dialogWrapper.find('#dialog-ok');
+      $form.find(':input:first').focus();
+      displayError = function(k, v) {
+        _this.$dialogWrapper.find('#' + k).addClass('error').next(".error-description").html(Translator.trans(v));
+      };
+      clearError = function(e) {
+        var $input;
+        $input = $(e.currentTarget);
+        if ($input.val() === "") {
+          return;
+        }
+        if ($input.is(".password-group")) {
+          $input = $(".password-group", $form);
+        }
+        $input.removeClass('error').next(".error-description").html("");
+        _this.resize();
+      };
+      requestSuccess = function(r) {
+        _this.options.okCallback(r.data);
+        _this.close();
+      };
+      requestError = function(r) {
+        var generic, k, v, _ref;
+        generic = Typeform.Ajax.getCustomMessage(r);
+        if (generic) {
+          $genericError.html(generic);
+        }
+        _ref = r.error;
+        for (k in _ref) {
+          v = _ref[k];
+          displayError(k, v);
+        }
+        _this.resize();
+        _this.options.koCallback(r);
+      };
+      $form.find("input").after("<span class='error-description'></span>");
+      $genericError = $("<div class='generic-error'></div>");
+      $form.append($genericError);
+      $form.on('input propertychange', ':input', clearError);
+      $form.requestManager().on('submit', function() {
+        $genericError.empty();
+        $okButton.addClass('loading');
+        $form.requestManager('processRequest', {
+          success: requestSuccess,
+          error: requestError,
+          always: function() {
+            return $okButton.removeClass('loading');
+          }
+        }, true);
+        return false;
+      });
+      return $form.on('input propertychange', '.password-strength-wrapper :password', function() {
+        var strength;
+        strength = tf.util.pwdstr($(this).val());
+        $('#password-strength-value', $form).attr('class', strength).text(tf.txt.trans(strength));
+      });
+    };
+
+    return Dialog;
+
+  })();
+  $.alert = function(option) {
+    if (typeof option === 'string') {
+      return new Dialog(ALERT, {
+        content: option
+      });
+    } else {
+      return new Dialog(ALERT, option);
+    }
+  };
+  $.confirm = function(option) {
+    if (typeof option === 'string') {
+      return new Dialog(CONFIRM, {
+        content: option
+      });
+    } else {
+      return new Dialog(CONFIRM, option);
+    }
+  };
+  $.form = function(option) {
+    if (typeof option === 'string') {
+      return new Dialog(FORM, {
+        content: option
+      });
+    } else {
+      return new Dialog(FORM, option);
+    }
+  };
+  $.popup = function(option) {
+    if (typeof option === 'string') {
+      return new Dialog(POPUP, {
+        content: option
+      });
+    } else {
+      return new Dialog(POPUP, option);
+    }
+  };
+  return $.fullscreen = function(option) {
+    if (typeof option === 'string') {
+      return new Dialog(FULLSCREEN, {
+        content: option
+      });
+    } else {
+      return new Dialog(FULLSCREEN, option);
+    }
+  };
+})(window.jQuery, window);
+
+/*
+
+Algorithm taken from:
+
+http://codeassembly.com/How-to-make-a-password-strength-meter-for-your-register-form/
+*/
+
+var PasswordStrength;
+
+PasswordStrength = (function() {
+  function PasswordStrength() {}
+
+  PasswordStrength.texts = ['weak', 'acceptable', 'good', 'better', 'best', 'unbreakable'];
+
+  PasswordStrength.check = function(pwd) {
+    var score, strength;
+    score = 0;
+    if (pwd.length > 5) {
+      score += 1;
+    }
+    if ((pwd.match(/[a-z]/)) && (pwd.match(/[A-Z]/))) {
+      score += 1;
+    }
+    if (pwd.match(/\d+/)) {
+      score += 1;
+    }
+    if (pwd.match(/.[!,@,#,$,%,^,&,*,?,_,~,-,(,)]/)) {
+      score += 1;
+    }
+    if (pwd.length > 12) {
+      score += 1;
+    }
+    strength = PasswordStrength.texts[score];
+    return "password-strength-" + strength;
+  };
+
+  return PasswordStrength;
+
+}).call(this);
+
+/*
+
+Export class to namespace
+*/
+
+
+namespace("Typeform.Validator", function(exports) {
+  return exports.PasswordStrength = PasswordStrength;
+});
+
+namespace("tf.util", function(exports) {
+  return exports.pwdstr = PasswordStrength.check;
+});
+
+var Linkify, linkify,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+Linkify = (function() {
+  var stripAnchors;
+
+  stripAnchors = function(text) {
+    return text.replace(/<(\s*)(\/*)a.*?>/g, '');
+  };
+
+  function Linkify() {
+    this.execute = __bind(this.execute, this);
+    this.p1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_{}|!:,.;]*[-A-Z0-9+&@#\/%=~_{}|])/gim;
+    this.r1 = '<a href="$1" target="_blank">$1</a>';
+    this.p2 = /(^|[^\/])(www\.[-A-Z0-9+&@#\/%?=~_{}|!:,.;]*[-A-Z0-9+&@#\/%=~_{}|])/gim;
+    this.r2 = '$1<a href="http://$2" target="_blank">$2</a>';
+    this.p3 = /([\w-+_\.]+@([\w-+_\.])+[\w-]{2,4}$)/gim;
+    this.r3 = '<a href="mailto:$1">$1</a>';
+    return;
+  }
+
+  Linkify.prototype.execute = function(text) {
+    text = stripAnchors(text);
+    return text.replace(this.p1, this.r1).replace(this.p2, this.r2).replace(this.p3, this.r3);
+  };
+
+  return Linkify;
+
+})();
+
+linkify = new Linkify();
+
+namespace('Typeform', function(exports) {
+  exports.Linkify = linkify.execute;
+});
+
+namespace('tf.txt', function(exports) {
+  exports.linkify = linkify.execute;
+});
+
+!function(name,context,definition){"undefined"!=typeof module?module.exports=definition("humane",context):"function"==typeof define&&"object"==typeof define.amd?define(definition):context.humane=definition("humane",context)}(0,this,function(name,context){var win=window,doc=document,ENV={on:function(el,type,cb){"addEventListener"in win?el.addEventListener(type,cb,!1):el.attachEvent("on"+type,cb)},off:function(el,type,cb){"removeEventListener"in win?el.removeEventListener(type,cb,!1):el.detachEvent("on"+type,cb)},bind:function(fn,ctx){return function(){fn.apply(ctx,arguments)}},isArray:Array.isArray||function(obj){return"[object Array]"===Object.prototype.toString.call(obj)},config:function(preferred,fallback){return null!=preferred?preferred:fallback},transSupport:!1,useFilter:/msie [678]/i.test(navigator.userAgent),_checkTransition:function(){var el=doc.createElement("div"),vendors={webkit:"webkit",Moz:"",O:"o",ms:"MS"};for(var vendor in vendors)vendor+"Transition"in el.style&&(this.vendorPrefix=vendors[vendor],this.transSupport=!0)}};ENV._checkTransition();var Humane=function(o){o||(o={}),this.queue=[],this.baseCls=o.baseCls||"humane",this.addnCls=o.addnCls||"",this.timeout="timeout"in o?o.timeout:2500,this.waitForMove=o.waitForMove||!1,this.clickToClose=o.clickToClose||!1,this.timeoutAfterMove=o.timeoutAfterMove||!1,this.container=o.container;try{this._setupEl()}catch(e){ENV.on(win,"load",ENV.bind(this._setupEl,this))}};return Humane.prototype={constructor:Humane,_setupEl:function(){var el=doc.createElement("div");if(el.style.display="none",!this.container){if(!doc.body)throw"document.body is null";this.container=doc.body}this.container.appendChild(el),this.el=el,this.removeEvent=ENV.bind(function(){this.timeoutAfterMove?setTimeout(ENV.bind(this.remove,this),this.timeout):this.remove()},this),this.transEvent=ENV.bind(this._afterAnimation,this),this._run()},_afterTimeout:function(){ENV.config(this.currentMsg.waitForMove,this.waitForMove)?this.removeEventsSet||(ENV.on(doc.body,"mousemove",this.removeEvent),ENV.on(doc.body,"click",this.removeEvent),ENV.on(doc.body,"keypress",this.removeEvent),ENV.on(doc.body,"touchstart",this.removeEvent),this.removeEventsSet=!0):this.remove()},_run:function(){if(!this._animating&&this.queue.length&&this.el){this._animating=!0,this.currentTimer&&(clearTimeout(this.currentTimer),this.currentTimer=null);var msg=this.queue.shift();ENV.config(msg.clickToClose,this.clickToClose)&&(ENV.on(this.el,"click",this.removeEvent),ENV.on(this.el,"touchstart",this.removeEvent));var timeout=ENV.config(msg.timeout,this.timeout);timeout>0&&(this.currentTimer=setTimeout(ENV.bind(this._afterTimeout,this),timeout)),ENV.isArray(msg.html)&&(msg.html="<ul><li>"+msg.html.join("<li>")+"</ul>"),this.el.innerHTML=msg.html,this.currentMsg=msg,this.el.className=this.baseCls,ENV.transSupport?(this.el.style.display="block",setTimeout(ENV.bind(this._showMsg,this),50)):this._showMsg()}},_setOpacity:function(opacity){if(ENV.useFilter)try{this.el.filters.item("DXImageTransform.Microsoft.Alpha").Opacity=100*opacity}catch(err){}else this.el.style.opacity=String(opacity)},_showMsg:function(){var addnCls=ENV.config(this.currentMsg.addnCls,this.addnCls);if(ENV.transSupport)this.el.className=this.baseCls+" "+addnCls+" "+this.baseCls+"-animate";else{var opacity=0;this.el.className=this.baseCls+" "+addnCls+" "+this.baseCls+"-js-animate",this._setOpacity(0),this.el.style.display="block";var self=this,interval=setInterval(function(){opacity<1?(opacity+=.1,opacity>1&&(opacity=1),self._setOpacity(opacity)):clearInterval(interval)},30)}},_hideMsg:function(){var addnCls=ENV.config(this.currentMsg.addnCls,this.addnCls);if(ENV.transSupport)this.el.className=this.baseCls+" "+addnCls,ENV.on(this.el,ENV.vendorPrefix?ENV.vendorPrefix+"TransitionEnd":"transitionend",this.transEvent);else var opacity=1,self=this,interval=setInterval(function(){opacity>0?(opacity-=.1,opacity<0&&(opacity=0),self._setOpacity(opacity)):(self.el.className=self.baseCls+" "+addnCls,clearInterval(interval),self._afterAnimation())},30)},_afterAnimation:function(){ENV.transSupport&&ENV.off(this.el,ENV.vendorPrefix?ENV.vendorPrefix+"TransitionEnd":"transitionend",this.transEvent),this.currentMsg.cb&&this.currentMsg.cb(),this.el.style.display="none",this._animating=!1,this._run()},remove:function(e){var cb="function"==typeof e?e:null;ENV.off(doc.body,"mousemove",this.removeEvent),ENV.off(doc.body,"click",this.removeEvent),ENV.off(doc.body,"keypress",this.removeEvent),ENV.off(doc.body,"touchstart",this.removeEvent),ENV.off(this.el,"click",this.removeEvent),ENV.off(this.el,"touchstart",this.removeEvent),this.removeEventsSet=!1,cb&&this.currentMsg&&(this.currentMsg.cb=cb),this._animating?this._hideMsg():cb&&cb()},log:function(html,o,cb,defaults){var msg={};if(defaults)for(var opt in defaults)msg[opt]=defaults[opt];if("function"==typeof o)cb=o;else if(o)for(var opt in o)msg[opt]=o[opt];return msg.html=html,cb&&(msg.cb=cb),this.queue.push(msg),this._run(),this},spawn:function(defaults){var self=this;return function(html,o,cb){return self.log.call(self,html,o,cb,defaults),self}},create:function(o){return new Humane(o)}},new Humane});
+/**
+ * ==========================================================================
+ *
+ * Typeform.Feedback : Contains methods to display alerts 
+ * and notifications to the user
+ *
+ * Requires: 
+ * - tf.util
+ * - jquery.typeform.dialog.js
+ *
+ * ==========================================================================
+*/
+
+var error_fn, feedback, info_fn, success_fn;
+
+if (tf.util.topfr()) {
+  feedback = {
+    'alert': $.alert,
+    'confirm': $.confirm
+  };
+  if (window.humane != null) {
+    humane.timeout = 4000;
+    success_fn = humane.spawn({
+      addnCls: 'humane-success'
+    });
+    info_fn = humane.spawn({
+      addnCls: 'humane-info'
+    });
+    error_fn = humane.spawn({
+      addnCls: 'humane-error'
+    });
+  } else {
+    success_fn = console.info;
+    info_fn = console.warn;
+    error_fn = console.error;
+  }
+  feedback['success'] = success_fn;
+  feedback['info'] = info_fn;
+  feedback['error'] = error_fn;
+} else {
+  feedback = window.top.tf.fdbk;
+}
+
+window.notify = feedback;
+
+namespace('tf', function(exports) {
+  exports.fdbk = feedback;
+});
+
+namespace('Typeform', function(exports) {
+  exports.Feedback = feedback;
+});
+
+/**
+ * ==========================================================================
+ *
+ * Typeform.Ajax : handles an Typeform standard ajax response
+ *
+ * Requires: 
+ *
+ *
+ * ==========================================================================
+*/
+
+(function(Typeform) {
+  var AUTHENTICATION_TIMEOUT, callFeedBackMethod, checkSessionExpired, displayFeedback, getCustomMessage, hasSessionExpired, _getFeedback;
+  AUTHENTICATION_TIMEOUT = 419;
+  hasSessionExpired = function(response) {
+    return response.status === AUTHENTICATION_TIMEOUT;
+  };
+  checkSessionExpired = function(response) {
+    var data;
+    if ((response != null) && hasSessionExpired(response)) {
+      data = getCustomMessage(response);
+      data.title = tf.txt.trans("" + data.title);
+      data.content = tf.txt.trans("" + data.content);
+      data.okCallback = tf.util.reload;
+      tf.fdbk.alert(data);
+      return true;
+    } else {
+      return false;
+    }
+  };
+  _getFeedback = function(response) {
+    if (response == null) {
+      response = {};
+    }
+    if (response.feedback != null) {
+      return response.feedback;
+    } else {
+      return [];
+    }
+  };
+  getCustomMessage = function(response) {
+    var a, f, m, message, _i, _len, _ref;
+    if (response == null) {
+      response = {};
+    }
+    _ref = _getFeedback(response);
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      f = _ref[_i];
+      for (m in f) {
+        a = f[m];
+        if (m === 'custom') {
+          message = a;
+        }
+      }
+    }
+    return message || false;
+  };
+  displayFeedback = function(response) {
+    var a, f, m, _i, _len, _ref;
+    if (response == null) {
+      response = {};
+    }
+    _ref = _getFeedback(response);
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      f = _ref[_i];
+      for (m in f) {
+        a = f[m];
+        if (m !== 'custom') {
+          callFeedBackMethod(m, a);
+        }
+      }
+    }
+  };
+  callFeedBackMethod = function(m, a) {
+    var _base;
+    if (typeof (_base = Typeform.Feedback)[m] === "function") {
+      _base[m](Translator.trans(a));
+    }
+  };
+  namespace('Typeform.Ajax', function(exports) {
+    exports.getCustomMessage = getCustomMessage;
+    exports.hasSessionExpired = checkSessionExpired;
+    exports.displayFeedback = displayFeedback;
+  });
+  namespace('tf.ajax', function(exports) {
+    exports.custom = getCustomMessage;
+    exports.sessionexpired = checkSessionExpired;
+    exports.feedback = displayFeedback;
+  });
+})(Typeform);
+
+!function($){function showPlaceholderIfEmpty(input,options){""===input.val()?input.data("placeholder").removeClass(options.hideClass):input.data("placeholder").addClass(options.hideClass)}function hidePlaceholder(input,options){input.data("placeholder").addClass(options.hideClass)}function positionPlaceholder(placeholder,input){var ta=input.is("textarea"),pt=parseFloat(input.css("padding-top")),pl=parseFloat(input.css("padding-left")),offset=input.offset();pt&&(offset.top+=pt),pl&&(offset.left+=pl),placeholder.css({width:input.innerWidth()-(ta?20:4),height:input.innerHeight()-6,lineHeight:input.css("line-height"),whiteSpace:ta?"normal":"nowrap",overflow:"hidden"}).offset(offset)}function startFilledCheckChange(input,options){var val=input.val();!function checkloop(){animId=requestAnimationFrame(checkloop),input.val()!==val&&(hidePlaceholder(input,options),stopCheckChange(),startEmptiedCheckChange(input,options))}()}function startEmptiedCheckChange(input,options){!function checkloop(){animId=requestAnimationFrame(checkloop),showPlaceholderIfEmpty(input,options)}()}function stopCheckChange(){window.cancelAnimationFrame&&cancelAnimationFrame(animId)}function log(msg){debug&&window.console&&window.console.log&&window.console.log(msg)}var animId,debug=!1;$.fn.placeHolder=function(config){log("init placeHolder");var o=this,l=$(this).length;return this.options=$.extend({className:"placeholder",visibleToScreenreaders:!0,visibleToScreenreadersHideClass:"placeholder-hide-except-screenreader",visibleToNoneHideClass:"placeholder-hide",hideOnFocus:!1,removeLabelClass:"visuallyhidden",hiddenOverrideClass:"visuallyhidden-with-placeholder",forceHiddenOverride:!0,forceApply:!1,autoInit:!0},config||window.placeHolderConfig),this.options.hideClass=this.options.visibleToScreenreaders?this.options.visibleToScreenreadersHideClass:this.options.visibleToNoneHideClass,$(this).each(function(index){function onFocusIn(){!o.options.hideOnFocus&&window.requestAnimationFrame?startFilledCheckChange(input,o.options):hidePlaceholder(input,o.options)}var label,placeholder,titleNeeded,polyfilled,input=$(this),text=input.attr("placeholder"),id=input.attr("id");return""!==text&&void 0!==text||(text=input[0].attributes.placeholder?input[0].attributes.placeholder.value:""),label=input.closest("label"),input.removeAttr("placeholder"),label.length||id?(label=label.length?label:$('label[for="'+id+'"]').first(),label.length?(polyfilled=$(label).find("."+o.options.className),polyfilled.length?(positionPlaceholder(polyfilled,input),polyfilled.text(text),input):(label.hasClass(o.options.removeLabelClass)&&label.removeClass(o.options.removeLabelClass).addClass(o.options.hiddenOverrideClass),placeholder=$("<span>").addClass(o.options.className).text(text).appendTo(label),titleNeeded=placeholder.width()>input.width(),titleNeeded&&placeholder.attr("title",text),positionPlaceholder(placeholder,input),input.data("placeholder",placeholder),placeholder.data("input",input),placeholder.click(function(){$(this).data("input").focus()}),input.focusin(onFocusIn),input.focusout(function(){showPlaceholderIfEmpty($(this),o.options),o.options.hideOnFocus||stopCheckChange()}),showPlaceholderIfEmpty(input,o.options),$(document).bind("fontresize resize",function(){positionPlaceholder(placeholder,input)}),$.event.special.resize?$("textarea").bind("resize",function(event){$(this).is(":visible")&&positionPlaceholder(placeholder,input),event.stopPropagation(),event.preventDefault()}):$("textarea").css("resize","none"),index>=l-1&&void 0!==$.attrHooks&&($.attrHooks.placeholder={get:function(elem){return"input"===elem.nodeName.toLowerCase()||"textarea"===elem.nodeName.toLowerCase()?$(elem).data("placeholder")?$($(elem).data("placeholder")).text():$(elem)[0].placeholder:void 0},set:function(elem,value){return $($(elem).data("placeholder")).text(value)}}),void(input.is(":focus")&&onFocusIn()))):void log("the input element with the placeholder needs a label!")):void log("the input element with the placeholder needs an id!")})},$(function(){var config=window.placeHolderConfig||{};return!1===config.autoInit?void log("placeholder:abort because autoInit is off"):("placeholder"in $("<input>")[0]||"placeHolder"in $("<input>")[0])&&!config.forceApply?void log("placeholder:abort because browser has native support"):void $("input[placeholder], textarea[placeholder]").placeHolder()})}(jQuery);
+function is_touch_device(){return"ontouchstart"in window||"onmsgesturechange"in window}!function($){$("label.disabled").on("click",function(e){return e.stopImmediatePropagation(),!1}),$.fn.log=function(s){return s=s||"",console.log(s,$(this)),this},$.fn.any=function(){return this.length>0},$.fn.name=function(name){var $result=$([]);return this.each(function(){$result=$result.add('[name="'+name+'"]',this)}),$result},$.fn.setClass=function(classes,add){if(void 0===classes||""===classes)return this;if(void 0!==add)return add?this.addClass(classes):this.removeClass(classes),this;var toAdd="",toRemove="";return"array"==typeof classes?toAdd=classes.join(" "):(classes=classes.split(" "),$.each(classes,function(i,c){switch(c.charAt(0)){case"-":c=c.substring(1),toRemove+=c+" ";break;case"+":c=c.substring(1),toAdd+=c+" ";break;default:toAdd+=c+" "}})),this.addClass(toAdd).removeClass(toRemove)},$.fn.alterClass=function(removals,additions){if(-1===removals.indexOf("*"))return this.removeClass(removals),additions?this.addClass(additions):this;var patt=new RegExp("\\s"+removals.replace(/\*/g,"[A-Za-z0-9-_]+").split(" ").join("\\s|\\s")+"\\s","g");return this.each(function(i,it){for(var cn=" "+it.className+" ";patt.test(cn);)cn=cn.replace(patt," ");it.className=$.trim(cn)}),additions?this.addClass(additions):this}}(jQuery),window.dialogDefaults={alert:{okLabel:translate("messages.alert-ok")},confirm:{okLabel:translate("messages.confirm-ok"),cancelLabel:translate("messages.confirm-cancel")}};var full=window.location.host,parts=full.split("."),pathname=window.location.pathname;is_touch_device()&&"1"!==sessionStorage.getItem("touch-detector")&&"admin"===parts[0]&&"/login"!==pathname&&"/signup"!==pathname&&($.alert(translate("touch-detector")),sessionStorage.setItem("touch-detector","1")),function($){$(document).ajaxError(function(_,xhr){if(403===xhr.status||419===xhr.status){var responseData=JSON.parse(xhr.responseText),keys=responseData.feedback[0].custom;$.alert({content:translate(keys.content),title:translate(keys.title),okCallback:function(){window.location.href="/"}})}}),Typeform.Spinner($(".api-button").children(".spinner"),{color:"#999999",radius:5,width:2}),$(document).on("click",".api-button",function(){return $("span",this).css("visibility","hidden"),$(this).addClass("loading"),$.ajax({url:$(this).attr("href"),success:function(r){$(".apiKey").html(r.data),$(".api-button").hide(),$(".api-success").fadeIn("400"),setTimeout(function(){$(".fix").fadeOut("400")},1e3)},error:function(){console.log("Error")}}),!1}),$(document).on("click",".sidebar-toogle",function(evt){evt.preventDefault(),$("body").toggleClass("sidebar-hide")}),$("#menu-logout").on("click",function(){tf.services.userBehaviour.trackEvent("logOut")}),$("#need-help").on("click",function(){tf.services.userBehaviour.trackEvent("headerNeedHelp")}),$("#header-upgrade-pro").on("click",function(evt){evt.which&&tf.services.userBehaviour.trackEvent("headerUpdatePro")}),$("#header-upgrade-proplus").on("click",function(){tf.services.userBehaviour.trackUpgradeProPlusFromHeader()}),$("#sidebar-update-pro").on("click",function(){tf.services.userBehaviour.trackEvent("SidebarUpdatePro")}),$("#header-referral").on("click",function(){tf.services.userBehaviour.trackEvent("headerReferralProgram")}),$(".demo","#forms").on("click",function(){tf.services.userBehaviour.trackEvent("needMoreIdeas")}),$(".workspace-memberslist-button").on("click",function(){tf.services.userBehaviour.trackAddUsersToWorkspaceButtonClicked()}),$("a#form-preview-button").on("click",function(){tf.services.userBehaviour.trackEvent("buttonTopPreviewTypeform")}),$(".download-excel").on("click",function(){tf.services.userBehaviour.trackEvent("downloadExcel")}),$("#publish-status").on("click",function(){tf.services.userBehaviour.trackEvent("publicPrivateProCoreButton")}),$("#logic-jump-switch").on("change",function(){tf.services.userBehaviour.trackEvent("LogicJumpMapSelector",{Switch:$("#logic-jump-switch").prop("checked")})}),$("#hidden-switch").on("change",function(){if(window.parent.Typeform.Business.checkIsPro()){var switchValue=$("#hidden-switch").prop("checked");window.parent.tf.services.userBehaviour.trackEvent("HiddenFieldSelector",{Switch:switchValue,natero_feature_name:"hidden_field_selector_"+switchValue})}}),$("#quickyform_public").on("change",function(){window.parent.tf.services.userBehaviour.trackEvent("publicPrivateSelector")}),$("#quickyform_branding").on("change",function(){if(window.parent.Typeform.Business.checkIsPro()){var switchValue=$("#quickyform_branding").prop("checked");window.parent.tf.services.userBehaviour.trackEvent("BrandingSelector",{Switch:switchValue,natero_feature_name:"branding_selector_"+switchValue})}}),$('input[name="user_notifications_enabled"]').on("change",function(){var switchValue=$(this).prop("checked");window.parent.tf.services.userBehaviour.trackEvent("UserNotificationSelector",{Switch:switchValue,natero_feature_name:"user_notification_selector_"+switchValue})}),$('input[name="self_notifications_enabled"]').on("change",function(){var switchValue=$(this).prop("checked");window.parent.tf.services.userBehaviour.trackEvent("SelfNotificationSelector",{Switch:switchValue,natero_feature_name:"self_notification_selector_"+switchValue})})}(jQuery),window.placeHolderConfig={forceApply:tf.utils.BrowserDetector.isIE(window.navigator.userAgent)};

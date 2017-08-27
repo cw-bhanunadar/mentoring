@@ -1,0 +1,1099 @@
+(function() {
+    function SupportChatLoader(userInfoData, abFeatures) {
+
+        var DROPDOWN_CHAT_LINK_CLASS = 'help-dropdown-support-chat'
+        var DROPDOWN_CHAT_LINK_HIDDEN_CLASS = 'help-dropdown-support-chat--hidden'
+        var DROPDOWN_CHAT_ICON_CLASS = 'help-dropdown-support-chat-icon'
+        var DROPDOWN_CHAT_ICON_HIDDEN_CLASS = 'help-dropdown-support-chat-icon--hidden'
+
+        function initialize() {
+            showChatControls()
+            window.$zopim(onLoad)
+        }
+
+        function showChatControls() {
+            var chatLink = document.getElementsByClassName(DROPDOWN_CHAT_LINK_CLASS)[0]
+            chatLink.classList.remove(DROPDOWN_CHAT_LINK_HIDDEN_CLASS)
+
+            var chatIcon = document.getElementsByClassName(DROPDOWN_CHAT_ICON_CLASS)[0]
+            chatIcon.classList.remove(DROPDOWN_CHAT_ICON_HIDDEN_CLASS)
+        }
+
+        function onLoad() {
+            return new tf.components.SupportChat(userInfoData, window.$zopim)
+        }
+
+        function shouldShow() {
+            return abFeatures.isZendeskChatEnabled
+                && userInfoData.isEnglishUser
+                && ( userInfoData.isPayingUser || userInfoData.isTeamGuest)
+        }
+
+        return {
+            initialize: initialize,
+            shouldShow: shouldShow
+        }
+    }
+
+    namespace('tf.components', function(exports) {
+        return exports.SupportChatLoader = SupportChatLoader
+    })
+})();
+
+(function() {
+    function SupportChat(userInfoData, zendeskChat) {
+        var DROPDOWN_CHAT_LINK_CLASS = 'help-dropdown-support-chat'
+        var DROPDOWN_CHAT_ICON_CLASS = 'help-dropdown-support-chat-icon'
+        var DROPDOWN_CHAT_ICON_NOTIFIED_CLASS = 'help-dropdown-support-chat-icon--notified'
+        var CHAT_LANGUAGE = 'en'
+
+        function initialize() {
+            initiateChat()
+            addSupportChatListeners()
+            addNewMessageEventHandler()
+        }
+
+        function initiateChat() {
+            var userName = userInfoData.name
+            var userEmail = userInfoData.email
+
+            zendeskChat.livechat.set({
+                language: CHAT_LANGUAGE,
+                name: userName,
+                email: userEmail
+            })
+        }
+
+        function onClickSupportChatButton() {
+            zendeskChat.livechat.window.toggle()
+        }
+
+        function onNewMessageReceived(numberOfUnreadMessages) {
+            var chatIcon = document.getElementsByClassName(DROPDOWN_CHAT_ICON_CLASS)[0]
+
+            if (numberOfUnreadMessages > 0) {
+                chatIcon.classList.add(DROPDOWN_CHAT_ICON_NOTIFIED_CLASS)
+            } else {
+                chatIcon.classList.remove(DROPDOWN_CHAT_ICON_NOTIFIED_CLASS)
+            }
+        }
+
+        function addSupportChatListeners() {
+            var chatLink = document.getElementsByClassName(DROPDOWN_CHAT_LINK_CLASS)[0]
+            chatLink.addEventListener('click', onClickSupportChatButton)
+        }
+
+        function addNewMessageEventHandler() {
+            zendeskChat.livechat.setOnUnreadMsgs(onNewMessageReceived)
+        }
+
+        initialize()
+
+        return {
+            onClickSupportChatButton: onClickSupportChatButton,
+            onNewMessageReceived: onNewMessageReceived
+        }
+    }
+
+    namespace('tf.components', function(exports) {
+        return exports.SupportChat = SupportChat
+    })
+})();
+
+(function() {
+    function HeaderDropdown(options) {
+        var IDLE_DROPDOWN_TIMEOUT = 1000;
+
+        var container,
+            template,
+            $headerButton,
+            $dropdownOptions,
+            closeDropdownTimeOut;
+
+        var initialize = function(options) {
+            container = options.container;
+            template = options.template;
+        };
+
+        var renderDropdown = function () {
+            container.html(template.html());
+        };
+
+        var initializeSelectors = function() {
+            $headerButton = container.find('.header-button');
+            $dropdownOptions = container.find('.options');
+        };
+
+        var addDropdownListeners = function() {
+            $headerButton.on('click', function(event) {
+                event.preventDefault();
+                toggleDropdown();
+            });
+
+            container.on('mouseover', function() {
+                if (this.closeDropdownTimeout) {
+                    clearInterval(this.closeDropdownTimeout);
+                    this.closeDropdownTimeout = null;
+                }
+            }.bind(this));
+
+            container.on('mouseleave', function() {
+                this.closeDropdownTimeout = setTimeout(function() {
+                    if ($dropdownOptions.is(':visible')) {
+                        closeDropdown();
+                    }
+                }, IDLE_DROPDOWN_TIMEOUT);
+            }.bind(this));
+        };
+
+        var toggleDropdown = function() {
+            if ($dropdownOptions.is(':visible')) {
+                closeDropdown();
+            } else {
+                openDropdown();
+            }
+        };
+
+        var openDropdown = function() {
+            closeHeaderDropdowns();
+            $dropdownOptions.stop(true, true);
+            $dropdownOptions.slideDown(200);
+            $('.header-button').not($headerButton).each(function(){
+                $(this).addClass('overlay');
+            });
+        };
+
+        var closeHeaderDropdowns = function() {
+            $('.options').hide();
+            $('.header-button').removeClass('overlay');
+        };
+
+        var closeDropdown = function() {
+            $dropdownOptions.stop(true, true);
+            $dropdownOptions.slideUp(200);
+            $('.header-button').not($headerButton).each(function(){
+                $(this).removeClass('overlay');
+            });
+        };
+
+        initialize(options);
+        renderDropdown();
+        initializeSelectors();
+        addDropdownListeners();
+
+        return {
+            closeDropdown: closeDropdown
+        };
+    }
+
+    namespace('tf.components', function(exports) {
+        return exports.HeaderDropdown = HeaderDropdown;
+    });
+})();
+
+(function() {
+
+    function HelpButton(userInfoData, userBehaviour, supportChat) {
+
+        var headerDropDown
+
+        var renderHelpDropdown = function(helpContainer) {
+            var options = {
+                container: helpContainer,
+                template: $('#header-help-button-dropdown')
+            }
+
+            headerDropDown = new tf.components.HeaderDropdown(options)
+            addDropdownListeners()
+            renderSupportChatButton()
+        }
+
+        var renderSupportChatButton = function() {
+            if (supportChat.shouldShow()) {
+                supportChat.initialize()
+            }
+        }
+
+        var addDropdownListeners = function() {
+            $('.help-dropdown-link').on('click', function() {
+                return userBehaviour.trackClickHelp()
+            })
+            $('.help-dropdown-crash-course').on('click', function() {
+                return userBehaviour.trackOpenCrashCourse()
+            })
+
+            $('.help-options a').on('click', function () {
+                headerDropDown.closeDropdown()
+            })
+        }
+
+        var renderHelpButton = function(helpContainer) {
+            helpContainer.html($('#header-help-button').html())
+            addButtonListeners()
+        }
+
+        var addButtonListeners = function() {
+            $('#help-button').on('click', function() {
+                return userBehaviour.trackClickHelp()
+            })
+        }
+
+        var initialize = function () {
+            var helpContainer = $('#header-help-container')
+
+            if (userInfoData.isEnglishUser) {
+                renderHelpDropdown(helpContainer)
+            } else {
+                renderHelpButton(helpContainer)
+            }
+        }
+
+        initialize()
+    }
+
+    namespace('tf.components.header', function(exports) {
+        return exports.HelpButton = HelpButton
+    })
+})();
+
+(function () {
+
+    var waitElement = function (id, callback) {
+        var _id = id;
+        var _callback = callback;
+        var _timeoutTicks = 5000;
+        var _isTimedOut = false;
+
+        checkElement();
+        var _timeout = setTimeout(function () { _isTimedOut = true; }, _timeoutTicks);
+
+        function checkElement () {
+            if (_isTimedOut) {
+                return;
+            }
+
+            var element = document.getElementById(id);
+
+            if (!element) {
+                window.requestAnimationFrame(checkElement);
+            } else {
+                window.clearTimeout(_timeout);
+                callback(element);
+            }
+        }
+    };
+
+    namespace('tf.services', function(exports) {
+        return exports.WaitDomElement = waitElement;
+    });
+})();
+
+(function () {
+
+    function IntercomChatWidget(waitDomElement) {
+
+        var isActive = function () {
+            var ABFeatures = Typeform.DataService.get('ABFeatures');
+            return ABFeatures && ABFeatures.isChatWidgetEnabled;
+        }
+
+        var hideChatWidget = function () {
+            var styleIntercomContainer = document.getElementById('style-intercom-container');
+            if (styleIntercomContainer) {
+                return;
+            }
+
+            var css = '#intercom-container { display: none; }';
+            var head = document.head || document.getElementsByTagName('head')[0];
+            var style = document.createElement('style');
+            style.id = 'style-intercom-container';
+            style.type = 'text/css';
+            if (style.styleSheet) {
+                style.styleSheet.cssText = css;
+            } else {
+                style.appendChild(document.createTextNode(css));
+            }
+            head.appendChild(style);
+        };
+
+        var showChatWidget = function () {
+            if (!isActive()) {
+                return;
+            }
+
+            var styleIntercomContainer = document.getElementById('style-intercom-container');
+            if (styleIntercomContainer) {
+                styleIntercomContainer.outerHTML = '';
+                delete this.styleIntercomContainer;
+            }
+        };
+
+        var bringToFront = function () {
+            if (!isActive()) {
+                return;
+            }
+
+            waitDomElement('intercom-container', function (container) {
+                container.classList.add('focused');
+            });
+        };
+
+        var moveToBack = function () {
+            if (!isActive()) {
+                return;
+            }
+
+            waitDomElement('intercom-container', function (container) {
+                container.classList.remove('focused');
+            });
+        };
+
+        var ChatWidgetResolver = function () {
+            hideChatWidget();
+        };
+
+        ChatWidgetResolver();
+
+        return {
+            hide: hideChatWidget,
+            show: showChatWidget,
+            bringToFront: bringToFront,
+            moveToBack: moveToBack
+        }
+    }
+
+    namespace('tf.services', function(exports) {
+        return exports.IntercomChatWidget = new IntercomChatWidget(tf.services.WaitDomElement);
+    });
+})();
+
+(function () {
+  const FORM_INVADERS = 'https://www.typeform.com/fi/'
+  const ESC_KEY_CODE = 27
+
+  const spinnerOptions = {
+    lines: 16,
+    length: 3,
+    width: 3,
+    radius: 14,
+    color: '#FFFFFF',
+    speed: 2.1,
+    trail: 60,
+    shadow: false,
+    hwaccel: false
+  }
+
+  function FormInvaders(userBehaviour) {
+
+    var initListeners = function () {
+      $('.form-invaders__link').on('click', function () {
+        userBehaviour.trackFormInvadersLaunch()
+        launch()
+      })
+    }
+
+    var launch = function () {
+      var self = this
+      const closeImg = 'https://s3-eu-west-1.amazonaws.com/share.typeform.com/close.gif'
+      this.$overlay = $("<div class='typeform-overlay'/>")
+      this.$wrapper = $("<div class='typeform-wrapper'/>")
+      this.$spinner = $("<div class='typeform-spinner' style='position:absolute;top:50%;left:50%'/>")
+      this.$iframe = $('<iframe/>')
+
+      this.$close = $("<img class='save-account__signup_question_close' src='" + closeImg + "'/>")
+      $('body').append(this.$overlay.append(this.$spinner), this.$wrapper.append(this.$close, this.$iframe))
+
+      $(document).on('keyup', function (e) {
+        const key = document.all ? e.keyCode : e.which
+        if (key === ESC_KEY_CODE) {
+          return close.call(self)
+        }
+      })
+
+      this.$close.on('click', function () {
+        close.call(self)
+      })
+
+      this.$iframe.on('load', function () {
+        animate.call(self)
+      })
+
+      open.call(self)
+    }
+
+    function open() {
+      var self = this
+      $(window).off('.resize-typeform')
+
+      this.$wrapper.addClass('popup')
+      resizePopup.call(self)
+      $(window).on('resize.resize-typeform', function () {
+        resizePopup.call(self)
+      })
+
+      return setTimeout(function () {
+        try {
+          self.spinner = new Spinner(spinnerOptions).spin(self.$spinner[0])
+        } catch (_error) {
+        }
+        self.$iframe.attr('src', FORM_INVADERS)
+
+        try {
+          self.$iframe[0].contentWindow.focus()
+        } catch (_error) {
+        }
+
+        return self.$overlay.addClass('typeform-overlay--open')
+      }, 1)
+    }
+
+    function close() {
+      var self = this
+      $('body').removeClass('typeform-loaded')
+      this.$wrapper.removeClass('show').addClass('hide')
+      return setTimeout(function () {
+        self.$wrapper.removeClass('popup drawer hide show')
+        self.$overlay.removeClass('typeform-overlay--open')
+
+        return window.focus()
+      }, 400)
+    }
+
+    function resizePopup() {
+      const height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight
+      const width = $(window).width()
+      const margin = 40
+      return this.$wrapper.css({
+        'width': (width - margin * 2) + 'px',
+        'height': (height - margin * 2) + 'px',
+        'top': margin + 'px',
+        'left': margin + 'px'
+      })
+    }
+
+    function animate() {
+      var self = this
+      this.$wrapper.addClass('show')
+
+      return setTimeout(function () {
+        $('body').addClass('typeform-loaded')
+        try {
+          return self.spinner.stop()
+        } catch (_error) {
+        }
+      }, 401)
+    }
+
+    initListeners()
+
+    return {
+      launch: launch
+    }
+  }
+
+  namespace('tf.components', function (exports) {
+    return exports.FormInvaders = FormInvaders
+  })
+})()
+
+var ABFeatures, HIDE_HELP_VARIANT, Header, firstLogin, plans, userBehaviour, userInfoData, workspaceData,
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+HIDE_HELP_VARIANT = 1;
+
+userInfoData = {};
+
+userBehaviour = tf.services.userBehaviour;
+
+plans = tf.services.plans;
+
+if (tf.data != null) {
+  userInfoData = tf.data.ext.json('userInfoData');
+  workspaceData = tf.data.ext.json('workspaceData');
+  ABFeatures = tf.data.ext.json('ABFeatures');
+  if (userInfoData != null) {
+    firstLogin = userInfoData.firstLogin;
+  }
+}
+
+Header = (function() {
+  var $resubscribeButton, $saveAccountButton, $upgradeProPlusButton, BUILDER_V2, ENGLISH_LANGUAGE, RESUBSCRIBE_DAYS, isConfigureSection, isCurrentPlanEligibleForReferral,
+    _this = this;
+
+  Header.prototype.userData = userInfoData;
+
+  Header.prototype.workspaceData = workspaceData;
+
+  Header.prototype.template = $('#layout-header-wrapper');
+
+  Header.prototype.showWorkspaceName = false;
+
+  Header.prototype.windowLocationOrigin = tf.services.getBaseUrl(window.location);
+
+  ENGLISH_LANGUAGE = 'en';
+
+  RESUBSCRIBE_DAYS = 30;
+
+  BUILDER_V2 = 'v2';
+
+  $saveAccountButton = $('#save-account-button');
+
+  $upgradeProPlusButton = $('#header-upgrade-proplus');
+
+  $resubscribeButton = $('#header-resubscribe');
+
+  Header.prototype.states = [
+    {
+      name: "dashboard",
+      subheader: "default",
+      path: "_admin"
+    }, {
+      name: "workspace_dashboard",
+      subheader: "default",
+      path: "_admin_workspace"
+    }, {
+      name: "account",
+      subheader: "none",
+      path: "_admin_account"
+    }, {
+      name: "crash-course",
+      subheader: "none",
+      path: "_help_crash_course"
+    }, {
+      name: "form",
+      subheader: "form",
+      path: "_admin_form_fields",
+      actions: function() {}
+    }, {
+      name: "design",
+      subheader: "form",
+      path: "_admin_form_design"
+    }, {
+      name: "configure",
+      subheader: "form",
+      path: "_admin_form_configure"
+    }, {
+      name: "distribute",
+      subheader: "form",
+      path: "_admin_form_distribute"
+    }, {
+      name: "analyze",
+      subheader: "form",
+      path: "_admin_form_analyze"
+    }, {
+      name: "gallery",
+      subheader: "gallery",
+      path: "_admin_gallery_workspaces"
+    }, {
+      name: "gallery-template",
+      subheader: "gallery",
+      path: "_admin_template_selected"
+    }, {
+      name: "gallery-template",
+      subheader: "gallery",
+      path: "_admin_template_selected_workspaces"
+    }, {
+      name: "gallery-tags",
+      subheader: "gallery",
+      path: "_admin_template_tag_get"
+    }, {
+      name: "superadmin-emails",
+      subheader: "superadmin",
+      path: "_superadmin_emails"
+    }, {
+      name: "superadmin-users",
+      subheader: "superadmin",
+      path: "_superadmin_users"
+    }, {
+      name: "superadmin-typeforms",
+      subheader: "superadmin",
+      path: "_superadmin_typeforms"
+    }, {
+      name: "superadmin-beardyman",
+      subheader: "superadmin",
+      path: "_superadmin_beardyman"
+    }, {
+      name: "superadmin-robots",
+      subheader: "superadmin",
+      path: "_superadmin_robots"
+    }, {
+      name: "superadmin-education",
+      subheader: "superadmin",
+      path: "_superadmin_education"
+    }, {
+      name: "superadmin-settings",
+      subheader: "superadmin",
+      path: "_superadmin_settings"
+    }, {
+      name: "superadmin-businesslogic",
+      subheader: "superadmin",
+      path: "_superadmin_business_logic"
+    }, {
+      name: "superadmin-recover",
+      subheader: "superadmin",
+      path: "_superadmin_recover"
+    }, {
+      name: "superadmin",
+      subheader: "superadmin",
+      path: "_superadmin*"
+    }, {
+      name: "superadmin-gallery",
+      subheader: "superadmin",
+      path: "_superadmin_gallery"
+    }, {
+      name: "superadmin-collections",
+      subheader: "superadmin",
+      path: "_superadmin_collections"
+    }, {
+      name: "superadmin-canonical",
+      subheader: "superadmin",
+      path: "_superadmin_canonical"
+    }
+  ];
+
+  Header.prototype.plans_logic = [
+    {
+      element: "#header-upgrade-pro",
+      shouldShow: function(currentPlan) {
+        return currentPlan === plans.BASIC();
+      }
+    }, {
+      element: "#header-upgrade-proplus",
+      requiresSubscription: true,
+      shouldShow: function(currentPlan, currentLang, subscriptionStatus) {
+        return currentPlan === plans.PRO() && !subscriptionStatus.isUnsubscribing && !subscriptionStatus.isUnsubscribed;
+      }
+    }, {
+      element: "#header-resubscribe",
+      requiresSubscription: true,
+      shouldShow: function(currentPlan, currentLang, subscriptionStatus) {
+        return ABFeatures.headerResubscribeButton && (currentPlan === plans.PRO() || __indexOf.call(plans.proPlusPlans(), currentPlan) >= 0) && subscriptionStatus.isUnsubscribing && subscriptionStatus.daysLeft <= RESUBSCRIBE_DAYS && currentLang === ENGLISH_LANGUAGE;
+      },
+      getContent: function(currentPlan, currentLang, subscriptionStatus) {
+        return translate('messages.header-resubscribe', {
+          daysLeft: subscriptionStatus.daysLeft,
+          planName: Header.getPlanName(currentPlan)
+        });
+      }
+    }, {
+      element: "#header-referral-programme",
+      shouldShow: function(currentPlan, currentLang) {
+        return isCurrentPlanEligibleForReferral.call(this, currentPlan, currentLang);
+      }
+    }, {
+      element: "#header-referral-button",
+      shouldShow: function(currentPlan, currentLang) {
+        return isCurrentPlanEligibleForReferral.call(this, currentPlan, currentLang);
+      }
+    }, {
+      element: "#header-referral-programme",
+      shouldHide: function(currentPlan) {
+        return currentPlan === plans.BASIC();
+      }
+    }
+  ];
+
+  function Header(path, saveAccountPopup) {
+    var newState;
+    this.saveAccountPopup = saveAccountPopup;
+    newState = this.initializeStateBasedOnPath(path);
+    if (newState != null) {
+      this.fillOutHeader();
+      this.setState(newState);
+      this.setupListeners();
+      if (!this.userData.isDemoUser) {
+        this.setUpgradeButton();
+      }
+      this.translateMessages([
+        {
+          attribute: 'data-translation'
+        }
+      ]);
+    }
+  }
+
+  Header.prototype.init = function() {
+    return this.translateMessages([
+      {
+        attribute: 'data-tooltip-translation',
+        callback: function(elements, text) {
+          if (!userInfoData.isDemoUser) {
+            return $(elements).tooltip("set", {
+              "content": text,
+              "style": "white centered",
+              "placement": "bottom",
+              "border": true,
+              "delay": 300
+            });
+          }
+        }
+      }
+    ]);
+  };
+
+  Header.prototype.getLastUsedState = function() {};
+
+  Header.prototype.setState = function(state) {
+    this.currentState = state;
+    if (state != null) {
+      if (state.subheader != null) {
+        $("#state-" + state.subheader).show();
+      }
+      if (state.actions != null) {
+        state.actions();
+      }
+      if (state.subheader === "form") {
+        this.formData = tf.data.ext.json('formData');
+        this.fillOutSubHeader();
+        this.initializeSubViews();
+        this.render();
+        this.showWorkspaceName();
+        this.setBackButtonUrl();
+        this.hideDesignMenuItemForV2Forms();
+      }
+      if (state.subheader === "gallery") {
+        this.showWorkspaceName();
+      }
+      return this.setActiveFormSection(state.name);
+    }
+  };
+
+  Header.prototype.initializeSubViews = function() {
+    var helpCenterLinks, listenToModelChanges, trialTooltip, trialTooltipContent, trialTooltipProFeaturesList, viewOptions;
+    trialTooltipContent = new tf.components.TrialTooltipContent(tf.txt.trans, tf.services.userBehaviour);
+    helpCenterLinks = tf.data.ext.json('helpCenterProFeaturesLinks');
+    trialTooltipProFeaturesList = tf.components.TrialTooltipProFeaturesList(helpCenterLinks);
+    trialTooltip = new tf.components.TrialTooltip(trialTooltipContent, trialTooltipProFeaturesList, tf.services.Features);
+    this.statusView = new tf.components.FormStatusView({
+      el: '#form-status',
+      FormDataPresenter: isConfigureSection.call(this) ? null : tf.presenters.FormDataPresenter,
+      businessRulesService: tf.common.businessRulesService,
+      trialTooltip: trialTooltip.addHeaderLightTooltip
+    });
+    viewOptions = {
+      el: '#form-trial',
+      businessRulesService: tf.common.businessRulesService,
+      trialTooltip: trialTooltip.addHeaderPillTooltip
+    };
+    listenToModelChanges = !isConfigureSection.call(this);
+    if (listenToModelChanges) {
+      _.extend(viewOptions, {
+        FormDataPresenter: tf.presenters.FormDataPresenter
+      });
+    }
+    this.trialView = new tf.components.TrialLabelView(viewOptions);
+  };
+
+  Header.prototype.render = function() {
+    var renderData;
+    renderData = tf.common.businessRulesService.getData();
+    this.statusView.render(renderData);
+    this.trialView.render(renderData);
+  };
+
+  Header.prototype.initializeStateBasedOnPath = function(path) {
+    var newState,
+      _this = this;
+    newState = _.findWhere(this.states, {
+      path: path
+    });
+    if (newState == null) {
+      newState = _.find(this.states, function(state) {
+        var isHit;
+        if (state.path.indexOf('*') !== -1) {
+          state.path = state.path.substring(0, state.path.length - 1);
+          isHit = path.indexOf(state.path) !== -1;
+          if (isHit) {
+            return state;
+          }
+        }
+      });
+    }
+    return newState;
+  };
+
+  Header.prototype.updateUIWithPlansLogic = function() {
+    var currentLanguage, currentPlan, plans_logic, updateItems, _ref;
+    currentPlan = ((_ref = this.userData) != null ? _ref.account_limit : void 0) || plans.BASIC();
+    currentLanguage = this.userData.language;
+    plans_logic = this.plans_logic;
+    updateItems = function(subscriptionStatus) {
+      return plans_logic.forEach(function(item) {
+        var $element, shouldShow;
+        $element = $(item.element);
+        if (subscriptionStatus && !item.requiresSubscription || !subscriptionStatus && item.requiresSubscription) {
+          return;
+        }
+        shouldShow = typeof item.shouldShow === "function" ? item.shouldShow(currentPlan, currentLanguage, subscriptionStatus) : void 0;
+        if (shouldShow) {
+          $element.show();
+        }
+        if (typeof item.shouldHide === "function" ? item.shouldHide(currentPlan, currentLanguage) : void 0) {
+          $element.hide();
+        }
+        if (shouldShow && item.getContent) {
+          return $element.text(item.getContent(currentPlan, currentLanguage, subscriptionStatus));
+        }
+      });
+    };
+    if (!this.userData.isDemoUser) {
+      updateItems();
+    }
+    if (!this.userData.isDemoUser) {
+      $.getJSON(Routing.generate('_admin_plan_subscription_status')).done(function(response) {
+        var subscriptionStatus;
+        subscriptionStatus = response.data;
+        return updateItems(subscriptionStatus);
+      });
+    }
+    return this;
+  };
+
+  Header.prototype.setUpgradeButton = function() {
+    var business;
+    business = tf.data.ext.json('business_logic');
+    if (!business.new_plans_activated) {
+      return $("[data-upgrade]").data({
+        popup: 'payment',
+        action: 'charge',
+        type: 'plan_year'
+      });
+    }
+  };
+
+  Header.prototype.setGravatar = function(link) {
+    return this.template.find('#user-gravatar').attr('src', link);
+  };
+
+  Header.prototype.setFormTitle = function(title) {
+    return this.template.find('#form-title').text(title);
+  };
+
+  Header.prototype.setActiveFormSection = function(section) {
+    return this.template.find("#menu-item-" + section).addClass('active');
+  };
+
+  Header.prototype.setFormPreviewUrl = function() {
+    var previewFormButton, url;
+    url = this.formData.public_url;
+    previewFormButton = this.template.find("#form-preview-button");
+    previewFormButton.attr('href', url);
+    if (this.userData.isDemoUser) {
+      previewFormButton.addClass('typeform-share');
+      return previewFormButton.attr('data-mode', '1');
+    }
+  };
+
+  Header.prototype.hideDesignMenuItemForV2Forms = function() {
+    var designMenuItem, isV2Form;
+    isV2Form = ABFeatures.isV2EditorEnabled && this.formData.builder_version === BUILDER_V2;
+    designMenuItem = this.template.find("#menu-item-design");
+    return designMenuItem.toggle(!isV2Form);
+  };
+
+  Header.prototype.setWorkspaceCount = function(count) {
+    var $workspace_count;
+    $workspace_count = this.template.find("#workspace-counter");
+    return $workspace_count.text(count);
+  };
+
+  Header.prototype.enableAdmin = function() {
+    return this.template.find('ul.account-options').prepend('<li><a href="/superadmin/identifier/">Superadmin</a></li>');
+  };
+
+  Header.prototype.showWorkspaceName = function() {
+    var $workspaceName, $wrapper;
+    $wrapper = this.template.find('#workspace-name-wrapper');
+    $workspaceName = $wrapper.find('.workspace-name');
+    $workspaceName.text(this.workspaceData.name);
+    $workspaceName.attr('href', Routing.generate('_admin_workspace', {
+      id: this.workspaceData.id
+    }));
+    return $wrapper.show();
+  };
+
+  Header.prototype.setBackButtonUrl = function() {
+    var $backButton;
+    $backButton = this.template.find('#form-info .back-to-workspace-button');
+    return $backButton.attr('href', Routing.generate('_admin_workspace', {
+      id: this.workspaceData.id
+    }));
+  };
+
+  Header.prototype.fireSaveAccountButtonAnimation = function() {
+    return setTimeout(function() {
+      $saveAccountButton.addClass('first-animation');
+      return $saveAccountButton.on('animationend webkitAnimationEnd oAnimationEnd MSAnimationEnd', function(e) {
+        $saveAccountButton.removeClass('first-animation');
+        $(this).off(e);
+        $saveAccountButton.addClass('second-animation');
+        return $saveAccountButton.on('animationend webkitAnimationEnd oAnimationEnd MSAnimationEnd', function(e) {
+          $('#save-account-button').removeClass('second-animation');
+          return $(this).off(e);
+        });
+      });
+    }, 700);
+  };
+
+  Header.prototype.setupListeners = function() {
+    var self,
+      _this = this;
+    self = this;
+    this.template.find('.select-workspace').on('click', function(event) {
+      event.preventDefault();
+      workspaceToggler.goToHash('/workspaces');
+      return userBehaviour.trackOpenWorkspacesPanel();
+    });
+    this.template.find('.add-workspace').on('click', function(event) {
+      event.preventDefault();
+      userBehaviour.trackEvent('headerCreateWorkspaceButton');
+      return workspaceToggler.goToHash('/workspaces/new');
+    });
+    this.template.find('#header-referral-button').on('click', function() {
+      workspaceToggler.close();
+      return userBehaviour.trackReferralProgramHeartClick();
+    });
+    this.template.find('#header-referral-button').on('mouseenter', function() {
+      return userBehaviour.trackReferralProgramHeartMouseHover();
+    });
+    if (this.userData.isDemoUser) {
+      this.template.find('#menu-item-distribute a').on('click', function(event) {
+        event.preventDefault();
+        return _this.saveAccountPopup.openSignupPopupDistribute();
+      });
+      if (!firstLogin) {
+        return this.fireSaveAccountButtonAnimation();
+      }
+    }
+  };
+
+  Header.prototype.setUserInfo = function() {
+    var $userEmail, $userInfo, $userName;
+    $userInfo = this.template.find('#header-user-information');
+    $userName = $userInfo.find('.user-name');
+    $userEmail = $userInfo.find('.user-email');
+    $userName.text(this.userData.name);
+    $userEmail.text(this.userData.email);
+    return $userInfo.show();
+  };
+
+  Header.prototype.shouldShowHelpButton = function() {
+    return !this.userData.shouldHideHelpButton && this.userData.getRemoveDemoCTAVariant !== HIDE_HELP_VARIANT;
+  };
+
+  Header.prototype.renderHelpButton = function() {
+    var supportChatLoader;
+    if (!this.userData.isDemoUser || this.shouldShowHelpButton()) {
+      supportChatLoader = new tf.components.SupportChatLoader(userInfoData, ABFeatures);
+      return new tf.components.header.HelpButton(userInfoData, userBehaviour, supportChatLoader);
+    }
+  };
+
+  Header.prototype.renderAccountButton = function() {
+    this.headerButton = $("#header-account-button-container");
+    if (this.userData.isDemoUser) {
+      return this.renderSaveAccountButton();
+    } else {
+      return this.renderMyAccountButton();
+    }
+  };
+
+  Header.prototype.renderSaveAccountButton = function() {
+    this.headerButton.html($('#header-save-account-button').html());
+    return this.handlerSaveAccountPopup();
+  };
+
+  Header.prototype.renderMyAccountButton = function() {
+    var dropdownEmail, options;
+    options = {
+      container: $("#header-account-button-container"),
+      template: $("#header-registered-user-button")
+    };
+    this.headerDropdown = new tf.components.HeaderDropdown(options);
+    dropdownEmail = this.template.find('#logged-in-user-email');
+    return dropdownEmail.text(this.userData.logged_in_user_email);
+  };
+
+  Header.prototype.handlerSaveAccountPopup = function() {
+    var _this = this;
+    $saveAccountButton = $('#save-account-button');
+    return $saveAccountButton.on('click', function() {
+      return _this.saveAccountPopup.openDefaultSignupPopup();
+    });
+  };
+
+  Header.prototype.fillOutHeader = function() {
+    this.renderHelpButton();
+    this.renderAccountButton();
+    this.setGravatar(this.userData.gravatar);
+    this.updateUIWithPlansLogic();
+    if (this.isTeamsAllowed()) {
+      this.renderManageTeamOption(this.template);
+    }
+    if (this.userData.accountid === 1) {
+      this.enableAdmin();
+      this.setUserInfo();
+    }
+    return this.setWorkspaceCount(this.userData.workspaceCount);
+  };
+
+  Header.prototype.isTeamsAllowed = function() {
+    return this.userData.account_limit.indexOf('ProPlus') >= 0;
+  };
+
+  Header.prototype.renderManageTeamOption = function(template) {
+    return template.find('ul.account-options li').eq(1).before('<li><a class="account-manage-team" data-translation="account-manage-team" href="#"></a></li>');
+  };
+
+  Header.prototype.fillOutSubHeader = function() {
+    this.setFormTitle(this.formData.title);
+    return this.setFormPreviewUrl();
+  };
+
+  Header.prototype.translateMessages = function(params) {
+    var param, _i, _len, _results;
+    _results = [];
+    for (_i = 0, _len = params.length; _i < _len; _i++) {
+      param = params[_i];
+      _results.push($('[' + param.attribute + ']').each(function(index, element) {
+        var translation, translationKey;
+        translationKey = $(element).attr(param.attribute);
+        translation = translate('messages.' + translationKey);
+        if (translation !== ('messages.' + translationKey)) {
+          if (param.callback) {
+            return param.callback(element, translation);
+          } else {
+            return $(element).html(translation);
+          }
+        }
+      }));
+    }
+    return _results;
+  };
+
+  isConfigureSection = function() {
+    return this.currentState.name === 'configure';
+  };
+
+  isCurrentPlanEligibleForReferral = function(currentPlan, currentLang) {
+    var plansWithReferral;
+    plansWithReferral = plans.referralEligible();
+    return __indexOf.call(plansWithReferral, currentPlan) >= 0 && currentLang === ENGLISH_LANGUAGE;
+  };
+
+  Header.getPlanName = function(currentPlan) {
+    if (currentPlan === plans.PRO()) {
+      return translate('messages.account.plans.name_pro');
+    }
+    return translate('messages.account.plans.name_pro_plus', {
+      paid_seats: plans.getNumberOfSeats(currentPlan)
+    });
+  };
+
+  return Header;
+
+}).call(this);
+
+namespace('tf.components', function(exports) {
+  return exports.Header = Header;
+});

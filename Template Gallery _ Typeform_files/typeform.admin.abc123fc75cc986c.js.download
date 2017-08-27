@@ -1,0 +1,3102 @@
+var UserEntrySignup = function (saveAccountPopup, abFeatures) {
+
+    _saveAccountPopup = saveAccountPopup;
+    _abFeatures = abFeatures;
+
+    function _closePopupCallback (deferred) {
+        deferred.resolve();
+    }
+
+    function showPopup () {
+        var deferred = $.Deferred()
+
+        _saveAccountPopup.openSignupEntry(_closePopupCallback.bind(this, deferred));
+
+        return deferred.promise();
+    }
+
+    function shouldShowPopup () {
+        return _abFeatures.isEntrySignupPopupEnabled;
+    }
+
+    function isSignupPopupOpened () {
+        return _saveAccountPopup.isSignupPopupOpened();
+    }
+
+    return {
+        showPopup: showPopup,
+        shouldShowPopup: shouldShowPopup,
+        isCloseButtonSavePopupHidden: _abFeatures.isHideCloseIconSaveAccount,
+        isSignupPopupOpened: isSignupPopupOpened
+    };
+};
+
+namespace('tf.components.popup', function(exports) {
+    return exports.UserEntrySignup = new UserEntrySignup(window.saveAccountPopup, Typeform.DataService.get('ABFeatures'));
+});
+
+var LandingPreviewForm = function LandingPreviewForm() {
+    var POPUP_MODE = 'drawer_left';
+    var formDataJsonId = 'json_data-formData';
+
+    function getBuildFormData() {
+        var formDataJsonElement = document.getElementById(formDataJsonId);
+        var formData = formDataJsonElement ? JSON.parse(formDataJsonElement.textContent) : null;
+        return formData;
+    }
+
+    function getViewFormUrl(formData) {
+        return formData.public_url;
+    }
+
+    return {
+        show: function() {
+            var formData = getBuildFormData();
+            if (formData) {
+                var url = getViewFormUrl(formData);
+                window.typeformEmbed.makePopup(url, {mode:POPUP_MODE, autoOpen: true});
+            }
+        }
+    }
+};
+
+namespace('tf.components.embedform', function(exports) {
+    return exports.LandingPreviewForm = new LandingPreviewForm();
+});
+
+var HIDE_VIDEO_VARIANT, WelcomeView;
+
+HIDE_VIDEO_VARIANT = 2;
+
+WelcomeView = (function() {
+  var addScript, getDemoUserVideoTemplateVars, getTemplateVars, openDemoUserVideoWelcomePopup, openWelcomePopup, renderPopup, setAlias, setContent, setDemoUserVideoContent;
+
+  WelcomeView.prototype.template = '\
+    <div class="welcome-content">\
+      <div class="welcome-header">\
+        {{ title }}\
+      </div>\
+      <div class="welcome-video">\
+        <iframe\
+          src="{{ urlVideo }}"\
+          width="600"\
+          height="337"\
+          frameborder="0"\
+          webkitallowfullscreen\
+          mozallowfullscreen\
+          allowfullscreen\
+        ></iframe>\
+      </div>\
+      <p>{{ description }}</p>\
+      <div id="start" class="admin-button turquoise close-button">{{ buttonText }}</div>\
+    </div>\
+    ';
+
+  WelcomeView.prototype.demo_user_video_template = '\
+		<div class="welcome-ab-video">\
+			<div class="welcome-ab-video__wrapper">\
+				<div class="welcome-ab-video__header">\
+					{{ heading }}\
+				</div>\
+				<div class="welcome-ab-video__video">\
+					<iframe\
+						src="//fast.wistia.net/embed/iframe/sut81a4hwt?autoPlay=true"\
+						frameborder="0"\
+						width="800"\
+						height="450"\
+						class="wistia_embed"\
+						name="wistia_embed">\
+					</iframe>\
+				</div>\
+				<div class="welcome-ab-video__login">\
+					{{ loginLabel }} <a href="{{ loginUrl }}" id="welcome-ab-video__login-button">{{ loginButton }}</a>\
+				</div>\
+			</div>\
+		</div>\
+\
+	';
+
+  WelcomeView.prototype.options = {
+    content: null,
+    closeButton: true,
+    className: 'welcomePopup'
+  };
+
+  setContent = function() {
+    return this.options.content = _.template(this.template, getTemplateVars.call(this));
+  };
+
+  getTemplateVars = function() {
+    var data;
+    return data = {
+      title: this.translator('messages.welcome-popup-title'),
+      urlVideo: this.translator('messages.intro-video-url'),
+      description: setAlias(this.translator('messages.welcome-popup-description'), this.properties.alias),
+      buttonText: this.translator('messages.welcome-popup-button')
+    };
+  };
+
+  setAlias = function(string, alias) {
+    return string.replace("#alias#", alias);
+  };
+
+  setDemoUserVideoContent = function() {
+    this.options.content = _.template(this.demo_user_video_template, getDemoUserVideoTemplateVars.call(this));
+    this.options.className = 'welcome-video-popup';
+    return this.options.canCloseWithClick = false;
+  };
+
+  addScript = function(src) {
+    var s;
+    s = document.createElement('script');
+    s.setAttribute('src', src);
+    document.body.appendChild(s);
+  };
+
+  getDemoUserVideoTemplateVars = function() {
+    var data;
+    return data = {
+      heading: this.translator('messages.welcome-video-heading'),
+      loginLabel: this.translator('messages.welcome-video-login-label'),
+      loginButton: this.translator('messages.welcome-video-login-button'),
+      loginUrl: this.getJsonData('loginUrl')
+    };
+  };
+
+  openDemoUserVideoWelcomePopup = function(options) {
+    options.onShow = this.demoUserVideoListenerEvents.bind(this);
+    renderPopup.call(this, options);
+    return addScript("//fast.wistia.net/assets/external/E-v1.js");
+  };
+
+  WelcomeView.prototype.demoUserVideoListenerEvents = function(elem) {
+    var _this = this;
+    this.trackUserBehaviour.trackEvent('WelcomeVideoPopup');
+    elem.find('#welcome-ab-video__login-button').on('click', function() {
+      return _this.trackUserBehaviour.trackEvent('DemoWelcomePopupLogInButton');
+    });
+    window._wq = window._wq || [];
+    _wq.push({
+      'sut81a4hwt': function(video) {
+        video.bind('end', function(t) {
+          elem.remove();
+          _this.trackUserBehaviour.trackPopupClosed();
+        });
+      }
+    });
+  };
+
+  openWelcomePopup = function(options) {
+    options.onShow = this.listenerEvents;
+    return renderPopup.call(this, options);
+  };
+
+  renderPopup = function(options) {
+    return this.renderFullscreenPopup(options);
+  };
+
+  WelcomeView.prototype.listenerEvents = function(elem) {
+    return elem.find('#start').on('click', function() {
+      return tf.services.userBehaviour.trackEvent('startButton');
+    });
+  };
+
+  function WelcomeView(properties, trackUserBehaviour, translator, getJsonData, renderFullscreenPopup, cutoutOverlay, userEntrySignupPopup) {
+    this.properties = properties;
+    this.trackUserBehaviour = trackUserBehaviour;
+    this.translator = translator;
+    this.getJsonData = getJsonData;
+    this.renderFullscreenPopup = renderFullscreenPopup;
+    this.cutoutOverlay = cutoutOverlay;
+    this.userEntrySignupPopup = userEntrySignupPopup;
+    if (this.properties.firstLogin) {
+      this.init();
+    }
+  }
+
+  WelcomeView.prototype.init = function() {
+    if (this.properties.isDemoUser) {
+      this.trackUserBehaviour.trackNewDemoUserCreation();
+      if (!window.location.hash) {
+        this.setWelcomeButton();
+        if (!this.properties.isWelcomeScreenDisabled && !this.userEntrySignupPopup.isSignupPopupOpened()) {
+          return this.showDemoUserWelcomeScreen();
+        } else {
+          return this.showSaveAccountPopup();
+        }
+      }
+    } else if (!window.location.hash) {
+      setContent.call(this);
+      return openWelcomePopup.call(this, this.options);
+    }
+  };
+
+  WelcomeView.prototype.showDemoUserWelcomeScreen = function() {
+    this.options.closedCallback = this.showSaveAccountPopup.bind(this);
+    setDemoUserVideoContent.call(this);
+    if (userInfoData.getRemoveDemoCTAVariant !== HIDE_VIDEO_VARIANT) {
+      return openDemoUserVideoWelcomePopup.call(this, this.options);
+    }
+  };
+
+  WelcomeView.prototype.setWelcomeButton = function() {
+    return this.buttonText = this.translator('messages.welcome-popup-button');
+  };
+
+  WelcomeView.prototype.showSaveAccountPopup = function() {
+    var openPopupDeferred;
+    if (this.userEntrySignupPopup.shouldShowPopup()) {
+      openPopupDeferred = $.Deferred().resolve();
+      $(".helper.createnew").hide();
+      openPopupDeferred = openPopupDeferred.pipe(this.userEntrySignupPopup.showPopup);
+      return openPopupDeferred.pipe(function() {
+        return $(".helper.createnew").show();
+      });
+    }
+  };
+
+  return WelcomeView;
+
+})();
+
+namespace("tf.views", function(exports) {
+  return exports.WelcomeView = WelcomeView;
+});
+
+var userInfoData = Typeform.DataService.get('userInfoData');
+tf.services.userBehaviour.load(userInfoData);
+new tf.views.WelcomeView(
+    userInfoData,
+    tf.services.userBehaviour,
+    tf.txt.trans,
+    tf.data.ext.json,
+    $.fullscreen,
+    tf.components.popup.CutoutOverlay,
+    //TASK MK-1303
+    tf.components.popup.UserEntrySignup
+);
+
+var Referral, referral,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+Referral = (function() {
+  Referral.prototype.code = null;
+
+  Referral.prototype.defaults = {
+    account_id: '',
+    signed_up_account: false,
+    email: '',
+    fb_share_image: '',
+    first_name: '',
+    mode: '',
+    payment_provider_id: '',
+    tenant_alias: '',
+    user_id: '',
+    user_image: '',
+    checksum: ''
+  };
+
+  Referral.prototype.referralData = null;
+
+  function Referral(_sqh) {
+    this._sqh = _sqh;
+    this.setCoupon = __bind(this.setCoupon, this);
+  }
+
+  Referral.prototype.init = function(referralData) {
+    this.referralData = _.extend({}, this.defaults, referralData);
+    if (this.referralData.signed_up_account) {
+      this._sqh.push(['init', this.referralData]);
+      return this._sqh.push(['autofill', this.setCoupon]);
+    }
+  };
+
+  Referral.prototype.setCoupon = function(code) {
+    return this.code = code || '';
+  };
+
+  Referral.prototype.getCoupon = function() {
+    return this.code;
+  };
+
+  return Referral;
+
+})();
+
+window._sqh = window._sqh || [];
+
+referral = new Referral(window._sqh);
+
+namespace("Typeform", function(exports) {
+  return exports.referral = referral;
+});
+
+Typeform.referral.init(Typeform.DataService.get('referralData'));
+
+function _getParameters (parameters) {
+    return _.chain(parameters.split('&'))
+        .map(function(item) {
+            if (item) {
+                return item.split('=')
+            }
+        }).compact().object().value()
+}
+
+function _clearSearchString (searchString) {
+    return searchString.replace('?', '')
+}
+
+var ParametersReader = function ParametersReader () {
+    this.getCouponParameter = function (searchString) {
+        var search = _clearSearchString(searchString)
+        if (!search) { return null }
+        var parameters = _getParameters(search)
+        if (parameters.coupon) { return parameters.coupon }
+        if (parameters.rsCode) { return parameters.rsCode }
+        return null
+    }
+
+    this.getPlanTypeParameter = function (searchString) {
+        var search = _clearSearchString(searchString)
+        if (!search) { return null }
+        var parameters = _getParameters(search)
+        return parameters.plan_type
+    }
+}
+
+/*
+ Export class to namespace
+ */
+namespace('tf.utils', function (exports) {
+    exports.ParametersReader = new ParametersReader()
+})
+
+var PaymentActionTracking = function PaymentActionTracking (userBehaviour) {
+    this.trackingCalls = {
+        goYearly: {
+            condition: function (action) {
+                return action === 'go_yearly' || action === 'go_proplus_yearly'
+            },
+            tracking: function () {
+                userBehaviour.trackGoYearly()
+            }
+        },
+        subscribe: {
+            condition: function (action) {
+                return action === 'subscribe'
+            },
+            tracking: function (purchase) {
+                userBehaviour.trackSubscribe(purchase.target_limit)
+            }
+        },
+        adjust: {
+            condition: function (action) {
+                return action === 'adjust'
+            },
+            tracking: function (purchase) {
+                userBehaviour.trackAdjust(purchase.action, purchase.target_limit)
+            }
+        },
+        upgrade: {
+            condition: function (action) {
+                return action === 'upgrade'
+            },
+            tracking: function (purchase) {
+                userBehaviour.trackUpgrade(purchase.target_limit)
+            }
+        }
+    }
+
+    this.trackAction = function (action, purchase, model) {
+        _.each(
+            this.trackingCalls,
+            function (rule) {
+                if (rule.condition(action, purchase)) {
+                    rule.tracking.call(this, purchase)
+                }
+            }
+        )
+        userBehaviour.trackPayment(model, purchase.target_limit)
+    }
+}
+
+/*
+ Export class to namespace
+ */
+namespace('Typeform.BusinessTools', function (exports) {
+    exports.PaymentActionTracking = new PaymentActionTracking(tf.services.userBehaviour)
+})
+
+var Business, business, isDemoUser,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
+Business = (function() {
+  var getLinkAttributes, hasActiveDiscountCoupon, isPaymentPage, isPricingPage, isProPlan, isProPlusPlan, showPopup, showPricingPage;
+
+  Business.prototype.callbackUrl = '';
+
+  Business.prototype.TRY_PRO_BUTTON_EVENT_NAME = 'TryPRO-Button';
+
+  Business.prototype.DEFAULT_PLAN_TYPE = 'plan_month';
+
+  Business.prototype.CONFIRM_TRY_PRO_BUTTON_EVENT_NAME = 'upgradeTypeformToPro';
+
+  Business.prototype.currency_templates = {
+    'usd': '$',
+    'eur': '€',
+    'gbp': '£'
+  };
+
+  Business.prototype.popups = {
+    'pro-plan': {
+      title: tf.txt.trans('messages.business-title-pro-plan'),
+      callAjax: Typeform.DataService.get('business_logic').paths['popup'],
+      dataAjax: {
+        view: 'upgrade_pro_plan'
+      },
+      closeButton: true
+    },
+    'payment': {
+      title: ' ',
+      callAjax: Typeform.DataService.get('business_logic').paths['payment'],
+      dataAjax: {
+        target_plan: 'pro',
+        target_plan_type: 'pro',
+        type: Business.DEFAULT_PLAN_TYPE,
+        uid: '',
+        action: 'subscribe'
+      },
+      initAjax: function() {
+        return Typeform.Business.Payment.init();
+      },
+      canCloseWithClick: false,
+      className: 'top popup-payment',
+      closeButton: true
+    },
+    'payment_pro_plus': {
+      title: ' ',
+      callAjax: Typeform.DataService.get('business_logic').paths['payment'],
+      dataAjax: {
+        target_plan_type: 'pro_plus',
+        type: Business.DEFAULT_PLAN_TYPE,
+        uid: '',
+        action: 'subscribe'
+      },
+      initAjax: function() {
+        return Typeform.Business.Payment.init();
+      },
+      canCloseWithClick: false,
+      className: 'top popup-payment',
+      closeButton: true
+    },
+    'try-pro-features': {
+      title: ' ',
+      callAjax: Typeform.DataService.get('business_logic').paths['try-pro-features'],
+      canCloseWithClick: false,
+      className: 'top popup-try-pro-features',
+      closeButton: true
+    },
+    'unsubscribe': {
+      title: ' ',
+      className: 'top',
+      callAjax: Typeform.DataService.get('business_logic').paths['popup'],
+      dataAjax: {
+        view: 'unsubscribe'
+      },
+      initAjax: function() {
+        return Typeform.Business.Unsubscribe.init();
+      },
+      closeButton: true
+    },
+    'resubscribe': {
+      title: ' ',
+      className: 'top',
+      callAjax: Typeform.DataService.get('business_logic').paths['popup'],
+      dataAjax: {
+        view: 'resubscribe'
+      },
+      initAjax: function() {
+        return Typeform.Business.Resubscribe.init();
+      },
+      closeButton: true
+    },
+    'header-resubscribe': {
+      title: ' ',
+      className: 'top',
+      callAjax: Typeform.DataService.get('business_logic').paths['popup'],
+      dataAjax: {
+        view: 'resubscribe'
+      },
+      initAjax: function() {
+        return Typeform.Business.Resubscribe.init();
+      },
+      closeButton: true
+    },
+    'downgrade': {
+      title: ' ',
+      className: 'top',
+      callAjax: Typeform.DataService.get('business_logic').paths['popup'],
+      dataAjax: {
+        view: 'downgrade'
+      },
+      initAjax: function() {
+        return Typeform.Business.Downgrade.init();
+      },
+      closeButton: true
+    },
+    'upgrade-form-to-pro': {
+      title: '',
+      callAjax: Typeform.DataService.get('business_logic').paths['upgrade-form-to-pro'],
+      initAjax: function() {},
+      closeButton: true
+    }
+  };
+
+  function Business(userBehaviour, isDemoUser, DataService, intercomChatWidget, accountService, parametersReader) {
+    var _this = this;
+    this.userBehaviour = userBehaviour;
+    this.isDemoUser = isDemoUser;
+    this.DataService = DataService;
+    this.intercomChatWidget = intercomChatWidget;
+    this.accountService = accountService;
+    this.parametersReader = parametersReader;
+    this.trackTryProButtonClick = __bind(this.trackTryProButtonClick, this);
+    this.ABFeatures = this.DataService.get('ABFeatures');
+    window.addEventListener('closePricing', function() {
+      _this.intercomChatWidget.moveToBack();
+      return _this.intercomChatWidget.hide();
+    });
+  }
+
+  Business.prototype.bindBuyOpenSaveAccountEvent = function() {
+    var _this = this;
+    $('a.buy-open-save-account').on('click', function(event) {
+      event.preventDefault();
+      return saveAccountPopup.openSignupPopupPro();
+    });
+    return $('.buy-pro-plus-plan').on('click', function(event) {
+      if (_this.isDemoUser) {
+        event.preventDefault();
+        event.stopPropagation();
+        return saveAccountPopup.openSignupPopupProPlus();
+      }
+    });
+  };
+
+  Business.prototype.showProPlusPaymentPopup = function() {
+    var popupData;
+    popupData = _.extend({}, this.popups.payment_pro_plus.dataAjax, {
+      popup: 'payment_pro_plus'
+    });
+    return this.preparePopup(popupData);
+  };
+
+  getLinkAttributes = function($el) {
+    var data;
+    data = {
+      popup: $el.attr('data-popup'),
+      type: $el.attr('data-type'),
+      target_plan: $el.attr('data-target-plan'),
+      uid: $el.attr('data-uid'),
+      action: $el.attr('data-action'),
+      form: $el.attr('data-form'),
+      date: $el.attr('data-date'),
+      tracking: $el.attr('data-tracking')
+    };
+    return data;
+  };
+
+  isPricingPage = function(popup) {
+    return popup === ('pricing' || 'pricing-with-basic-plan');
+  };
+
+  isPaymentPage = function(popup) {
+    return popup === 'payment_pro_plus' || popup === 'payment' || popup === 'upgrade-form-to-pro';
+  };
+
+  hasActiveDiscountCoupon = function(accountService) {
+    return accountService.getDiscountCoupon() && !accountService.hasSeenDiscountCoupon();
+  };
+
+  showPricingPage = function(tracking) {
+    if (hasActiveDiscountCoupon(this.accountService)) {
+      this.intercomChatWidget.show();
+      this.intercomChatWidget.bringToFront();
+    }
+    $('#dialog-wrapper .close-button').click();
+    return location.hash = 'popup/pricing' + '?source=' + tracking;
+  };
+
+  Business.prototype.getCustomerPlanType = function(accountService) {
+    var planType;
+    planType = this.parametersReader.getPlanTypeParameter(window.location.search);
+    if (!planType) {
+      planType = accountService.getSavedPlanType();
+      if (planType !== 'plan_month' && planType !== 'plan_year') {
+        return null;
+      }
+    }
+    return planType;
+  };
+
+  isProPlusPlan = function(plan) {
+    return plan.indexOf('ProPlus') !== -1;
+  };
+
+  isProPlan = function(plan) {
+    return plan.indexOf('Pro') !== -1;
+  };
+
+  showPopup = function(link, userInfoData) {
+    var customerPlanType, options, spinnerColor;
+    if (link.popup === void 0) {
+      link.popup = 'payment';
+    }
+    if (link.type === void 0) {
+      link.type = this.DEFAULT_PLAN_TYPE;
+    }
+    if (link.target_plan_type === 'pro_plus' && userInfoData.is_pro_plan) {
+      link.action = 'upgrade';
+    }
+    if (link.action === void 0) {
+      link.action = 'subscribe';
+    }
+    if (link.popup === 'pricing') {
+      link.action = '';
+    }
+    options = {
+      target_plan: link.target_plan
+    };
+    spinnerColor = '#FFFFFF';
+    customerPlanType = this.getCustomerPlanType(this.accountService);
+    if (customerPlanType !== null) {
+      link.type = customerPlanType;
+    }
+    if (link.action === 'adjust' && isProPlusPlan(userInfoData.plan)) {
+      link.popup = 'payment_pro_plus';
+      options = this.preparePopupPaymentProPlus(link.type, link.uid, link.action, link.className);
+    } else if (link.action === 'update' && link.popup === 'payment') {
+      options = this.preparePopupPayment(link.type, link.uid, link.action, link.className);
+    } else if (link.action !== 'adjust' && link.popup === 'payment' && !isProPlusPlan(userInfoData.plan)) {
+      if (isProPlan(userInfoData.plan)) {
+        link.action = 'go_yearly';
+        link.type = 'plan_year';
+      }
+      options = this.preparePopupPayment(link.type, link.uid, link.action, link.className, link.forceCoupon);
+    } else if (link.popup === 'payment_pro_plus') {
+      if (isProPlusPlan(userInfoData.plan)) {
+        link.action = 'go_proplus_yearly';
+        link.type = 'plan_year';
+      }
+      options = this.preparePopupPaymentProPlus(link.type, link.uid, link.action, link.className);
+    } else if (link.popup === 'upgrade-form-to-pro') {
+      options = this.preparePopupUpgradeFormToPro(link.form);
+    } else if (link.popup === 'unsubscribe' && userInfoData.plan !== 'Basic') {
+      options = this.preparePopupUnsubscribe();
+    } else if (link.popup === 'resubscribe') {
+      options = this.preparePopupResubscribe();
+    } else if (link.popup === 'header-resubscribe') {
+      options = this.preparePopupResubscribeFromHeader();
+    } else if (link.popup === 'downgrade') {
+      options = this.preparePopupDowngrade();
+    } else if (link.popup === "try-pro-features") {
+      this.trackTryProButtonClick();
+    } else if (link.popup === "pricing") {
+      tf.services.userBehaviour.trackEvent('ViewPricingTable', {
+        trigger: link.tracking
+      });
+    } else {
+      return;
+    }
+    options.spinnerColor = spinnerColor;
+    return this.loadPopup(link.popup, options);
+  };
+
+  Business.prototype.preparePopup = function(link) {
+    var userInfoData;
+    if (link == null) {
+      link = {};
+    }
+    userInfoData = tf.data.ext.json('userInfoData');
+    if (isPricingPage(link.popup)) {
+      showPricingPage.call(this, link.tracking);
+    } else {
+      showPopup.call(this, link, userInfoData);
+    }
+    return false;
+  };
+
+  Business.prototype.preparePopupPayment = function(type, uid, action, className, forceCoupon) {
+    var options, properties;
+    if (forceCoupon == null) {
+      forceCoupon = null;
+    }
+    options = {
+      dataAjax: {
+        type: type,
+        uid: uid,
+        action: action
+      },
+      className: className,
+      forceCoupon: forceCoupon
+    };
+    if (action === 'subscribe' || action === 'go_yearly') {
+      properties = {
+        Action: action,
+        Type: type
+      };
+      this.userBehaviour.trackEvent('viewPaymentPage', properties);
+    } else {
+      this.userBehaviour.trackEvent('viewFormUpdateInfo');
+    }
+    return options;
+  };
+
+  Business.prototype.preparePopupPaymentProPlus = function(type, uid, action, className) {
+    var options, properties;
+    options = {
+      dataAjax: {
+        type: type,
+        uid: uid,
+        action: action
+      },
+      className: className
+    };
+    if (action === 'subscribe' || action === 'go_yearly') {
+      properties = {
+        Action: action,
+        Type: type
+      };
+      this.userBehaviour.trackEvent('viewPaymentPage', properties);
+    } else {
+      this.userBehaviour.trackEvent('viewFormUpdateInfo');
+    }
+    return options;
+  };
+
+  Business.prototype.preparePopupUpgradeFormToPro = function(form) {
+    var options;
+    options = {
+      dataAjax: {
+        form: form
+      }
+    };
+    this.userBehaviour.trackEvent(this.CONFIRM_TRY_PRO_BUTTON_EVENT_NAME);
+    return options;
+  };
+
+  Business.prototype.preparePopupUnsubscribe = function() {
+    var options;
+    options = {
+      dataAjax: {
+        view: 'unsubscribe'
+      }
+    };
+    this.userBehaviour.trackEvent('unsubscribeForm');
+    return options;
+  };
+
+  Business.prototype.preparePopupResubscribe = function() {
+    var options, properties;
+    options = {
+      dataAjax: {
+        view: 'resubscribe'
+      }
+    };
+    properties = {
+      popup_name: 'resubscribe',
+      popup_from: 'planandbilling',
+      popup_type: 'fullscreen'
+    };
+    this.userBehaviour.trackEvent('PopUp', properties);
+    return options;
+  };
+
+  Business.prototype.preparePopupResubscribeFromHeader = function() {
+    var options, properties;
+    options = {
+      dataAjax: {
+        view: 'resubscribe'
+      }
+    };
+    properties = {
+      popup_name: 'resubscribe',
+      popup_from: 'ButtonHeader',
+      popup_type: 'fullscreen'
+    };
+    this.userBehaviour.trackEvent('PopUp', properties);
+    return options;
+  };
+
+  Business.prototype.preparePopupDowngrade = function() {
+    var options;
+    options = {
+      dataAjax: {
+        view: 'downgrade'
+      }
+    };
+    this.userBehaviour.trackEvent('downgradeForm');
+    return options;
+  };
+
+  Business.prototype.trackTryProButtonClick = function() {
+    return this.userBehaviour.trackEvent(this.TRY_PRO_BUTTON_EVENT_NAME);
+  };
+
+  Business.prototype.loadPopup = function(popup, options) {
+    var dataAjax, popupConfig, popupOptions,
+      _this = this;
+    if (options == null) {
+      options = {};
+    }
+    popupConfig = this.popups[popup];
+    dataAjax = _.extend({}, popupConfig.dataAjax, options.dataAjax);
+    popupOptions = _.extend(popupConfig, options);
+    popupOptions.dataAjax = dataAjax;
+    if (hasActiveDiscountCoupon(this.accountService)) {
+      this.intercomChatWidget.show();
+      this.intercomChatWidget.bringToFront();
+      popupOptions.closedCallback = function() {
+        _this.intercomChatWidget.moveToBack();
+        return _this.intercomChatWidget.hide();
+      };
+    }
+    $.fullscreen(popupOptions);
+  };
+
+  Business.prototype.executeAction = function(t, data, callback) {
+    var view,
+      _this = this;
+    if (callback == null) {
+      callback = function() {};
+    }
+    if ((data != null) && (data.view != null)) {
+      view = data.view;
+    }
+    return $.ajax(Typeform.DataService.get('business_logic').paths[t], {
+      type: 'GET',
+      data: data,
+      async: false,
+      error: function(r, textStatus) {
+        notify.error(textStatus);
+      },
+      success: function(r) {
+        if (view != null) {
+          $('body').alterClass('popup-*', 'popup-' + view);
+        }
+        $(document).find("#dialog").html(r);
+        callback(_this.callbackUrl);
+      }
+    });
+  };
+
+  Business.prototype.checkIsPro = function() {
+    return this.DataService.getBusinessLogic().is_pro_plan;
+  };
+
+  Business.prototype.isProPlan = function() {
+    return this.DataService.get('business_logic').is_pro_plan;
+  };
+
+  Business.prototype.getAccountPlanInterval = function() {
+    return this.DataService.getBusinessLogic().plan_interval;
+  };
+
+  Business.prototype.currentPlanIsYearly = function() {
+    return this.getAccountPlanInterval() === 'plan_year';
+  };
+
+  Business.prototype.openUnable = function(act, isProPlus, canSeeItInAction) {
+    var className, self, spinnerColor;
+    if (isProPlus == null) {
+      isProPlus = false;
+    }
+    if (canSeeItInAction == null) {
+      canSeeItInAction = true;
+    }
+    spinnerColor = '#FFFFFF';
+    className = 'popup-upgrade-wrapper';
+    if (isProPlus) {
+      className += ' popup-proplus';
+    }
+    if (hasActiveDiscountCoupon(this.accountService)) {
+      this.intercomChatWidget.show();
+      this.intercomChatWidget.bringToFront();
+    }
+    self = this;
+    $.fullscreen({
+      callAjax: Typeform.DataService.get('business_logic').paths['popup'],
+      dataAjax: {
+        formid: Typeform.DataService.get('qid'),
+        view: 'upgrade_pro_typeform',
+        act: act,
+        showProPlusPopup: isProPlus,
+        canSeeItInAction: canSeeItInAction
+      },
+      closeButton: true,
+      spinnerColor: spinnerColor,
+      className: className,
+      closedCallback: function() {
+        var _ref, _ref1, _ref2;
+        self.intercomChatWidget.moveToBack();
+        self.intercomChatWidget.hide();
+        if (tf.page) {
+          if ((_ref = tf.page.build.views.body_list) != null) {
+            _ref.destroyIframe();
+          }
+          if ((_ref1 = tf.page.build.views.body_list) != null) {
+            _ref1.updateGroupDrags();
+          }
+          return (_ref2 = tf.page.build.views.fieldsbar) != null ? _ref2.destroyIframe() : void 0;
+        }
+      }
+    });
+    this.userBehaviour.trackEvent('UnableProFeature-' + act);
+  };
+
+  Business.prototype.openProFeatureTutorial = function(act) {
+    var bindEndVideoListener, closeProFeatureTutorialDialog, proFeatureTutorialDialog, spinnerColor;
+    spinnerColor = '#FFFFFF';
+    closeProFeatureTutorialDialog = function() {
+      if (proFeatureTutorialDialog) {
+        return proFeatureTutorialDialog.close();
+      }
+    };
+    bindEndVideoListener = function() {
+      window._wq = window._wq || [];
+      return _wq.push({
+        '_all': function(video) {
+          return video.bind('end', function() {
+            return closeProFeatureTutorialDialog();
+          });
+        }
+      });
+    };
+    proFeatureTutorialDialog = $.fullscreen({
+      callAjax: Routing.generate('popup_pro_feature_tutorial_video'),
+      dataAjax: {
+        formid: Typeform.DataService.get('qid'),
+        act: act
+      },
+      closeButton: true,
+      cleanUrlHashOnClose: false,
+      spinnerColor: spinnerColor,
+      className: 'fullscreen-video-popup fullscreen-video-popup-green-bg',
+      closedCallback: function() {
+        var _ref, _ref1, _ref2;
+        tf.services.ProFeatureTutorialService.saveAccountAction(act);
+        if (tf.page) {
+          if ((_ref = tf.page.build.views.body_list) != null) {
+            _ref.destroyIframe();
+          }
+          if ((_ref1 = tf.page.build.views.body_list) != null) {
+            _ref1.updateGroupDrags();
+          }
+          return (_ref2 = tf.page.build.views.fieldsbar) != null ? _ref2.destroyIframe() : void 0;
+        }
+      },
+      initAjax: function() {
+        return bindEndVideoListener();
+      }
+    });
+    this.userBehaviour.trackEvent('ProFeatureTutorial-' + act);
+  };
+
+  Business.prototype.formatByCurrency = function(value, currency, wrap) {
+    var currency_html;
+    if (wrap == null) {
+      wrap = false;
+    }
+    currency_html = this.currency_templates[currency];
+    if (wrap) {
+      currency_html = '<span class="currency">' + this.currency_templates[currency] + '</span>';
+    }
+    if (currency === 'eur') {
+      return value + currency_html;
+    } else {
+      return currency_html + value;
+    }
+  };
+
+  Business.prototype.openPopupDirectly = function() {
+    var data;
+    data = {
+      popup: 'payment',
+      type: this.DEFAULT_PLAN_TYPE,
+      uid: '',
+      action: 'subscribe',
+      form: '',
+      date: ''
+    };
+    return this.preparePopup(data);
+  };
+
+  Business.prototype.bindEvents = function() {
+    var $body,
+      _this = this;
+    $body = $('body');
+    $body.on('click', 'a.business-popup', function(event) {
+      var $el, linkData;
+      $el = $(event.target);
+      if ($el.attr('href')) {
+        _this.callbackUrl = $el.attr('href');
+      }
+      linkData = getLinkAttributes($el);
+      _this.preparePopup(linkData);
+      return false;
+    });
+    $body.on('click', '#link-upgrade-typeform', function() {
+      _this.trackTryProButtonClick();
+      $('#first-page').fadeOut('200', function() {
+        return $('#second-page').fadeIn();
+      });
+      return false;
+    });
+  };
+
+  return Business;
+
+})();
+
+/*
+Export class to namespace
+*/
+
+
+isDemoUser = false;
+
+if (tf && tf.data) {
+  isDemoUser = tf.data.ext.json('userInfoData').isDemoUser;
+}
+
+business = new Business(tf.services.userBehaviour, isDemoUser, Typeform.DataService, tf.services.IntercomChatWidget, tf.services.AccountService, tf.utils.ParametersReader);
+
+namespace("Typeform", function(exports) {
+  return exports.Business = business;
+});
+
+Typeform.Business.bindEvents();
+
+var Payment, payment,
+  __slice = [].slice;
+
+Payment = (function() {
+  Payment.prototype.PLAN_YEAR = 'plan_year';
+
+  Payment.prototype.view = null;
+
+  Payment.prototype.payment_data = null;
+
+  function Payment(referralCoupon, userBehaviour, business, userInfoData, accountService, parametersReader) {
+    this.referralCoupon = referralCoupon;
+    this.userBehaviour = userBehaviour;
+    this.business = business;
+    this.userInfoData = userInfoData;
+    this.accountService = accountService;
+    this.parametersReader = parametersReader;
+  }
+
+  Payment.prototype.init = function() {
+    var action, customerCoupon, queryPlanType;
+    this.payment_data = payment_data;
+    if (this.payment_data) {
+      customerCoupon = this.getCustomerCoupon(this.payment_data, this.referralCoupon, this.accountService);
+      action = this.payment_data.action;
+      if (action !== 'go_yearly' && action !== 'go_proplus_yearly') {
+        queryPlanType = this.getCustomerPlanType(this.accountService);
+        if (queryPlanType) {
+          this.payment_data.purchase.type = queryPlanType;
+        }
+      }
+      if (this.shouldShowCoupon()) {
+        this.payment_data.purchase.coupon = customerCoupon;
+      }
+      this.view = new this.business.PaymentView({
+        userInfoData: this.userInfoData,
+        model: new this.business.PurchaseModel(this.payment_data.purchase),
+        card_last4: this.payment_data.customer.card_last4,
+        action: action
+      });
+      this.view.render();
+    }
+  };
+
+  Payment.prototype.getCustomerPlanType = function(accountService) {
+    var planType;
+    planType = this.parametersReader.getPlanTypeParameter(window.location.search);
+    if (!planType) {
+      planType = accountService.getSavedPlanType();
+      if (planType !== 'plan_month' && planType !== 'plan_year') {
+        return null;
+      }
+    }
+    return planType;
+  };
+
+  Payment.prototype.getCustomerCoupon = function(paymentData, referral, accountService) {
+    var customerCoupon, queryCoupon, referralCoupon, savedCustomerCoupon, savedQueryCoupon;
+    customerCoupon = null;
+    savedCustomerCoupon = paymentData.customer.coupon.id;
+    referralCoupon = referral.getCoupon();
+    queryCoupon = this.parametersReader.getCouponParameter(window.location.search);
+    savedQueryCoupon = accountService.getDiscountCoupon();
+    if (queryCoupon) {
+      customerCoupon = queryCoupon;
+      this.accountService.markSeenDiscountCoupon(customerCoupon);
+    } else if (savedQueryCoupon) {
+      customerCoupon = savedQueryCoupon;
+      this.accountService.markSeenDiscountCoupon(customerCoupon);
+    } else if (referralCoupon) {
+      customerCoupon = referralCoupon;
+      this.userBehaviour.trackEvent('AppliedReferralCoupon');
+    } else {
+      customerCoupon = savedCustomerCoupon;
+    }
+    if (customerCoupon) {
+      this.userBehaviour.trackForcedCoupon();
+    }
+    return customerCoupon;
+  };
+
+  Payment.prototype.shouldShowCoupon = function() {
+    return !(this.payment_data.type === this.PLAN_YEAR && this.payment_data.customer.coupon.is_monthly_coupon);
+  };
+
+  Payment.prototype.template = function() {
+    var args;
+    args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+    args.push({
+      evaluate: /<%([\s\S]+?)%>/g,
+      interpolate: /<%=([\s\S]+?)%>/g,
+      escape: /<%-([\s\S]+?)%>/g
+    });
+    return _.template.apply(_, args);
+  };
+
+  return Payment;
+
+})();
+
+/*
+Export class to namespace
+*/
+
+
+payment = new Payment(Typeform.referral, tf.services.userBehaviour, Typeform.Business, Typeform.DataService.get('userInfoData'), tf.services.AccountService, tf.utils.ParametersReader);
+
+namespace("Typeform.Business", function(exports) {
+  return exports.Payment = payment;
+});
+
+var Unsubscribe;
+
+Unsubscribe = {
+  $el: null,
+  url: '',
+  options: {
+    spinner: {
+      lines: 16,
+      length: 3,
+      width: 3,
+      radius: 10,
+      color: '#ffffff',
+      speed: 2.1,
+      trail: 60,
+      shadow: false,
+      hwaccel: false
+    }
+  },
+  init: function() {
+    var self, spinner;
+    self = this;
+    this.$el = $('#unsubscribe-popup');
+    this.$el.on('click', '.admin-button', function() {
+      self.url = $(this).data('action');
+      self.submit();
+      return false;
+    });
+    return spinner = new Spinner(this.options.spinner).spin(this.$el.find('button').children('.spinner')[0]);
+  },
+  submit: function() {
+    var self;
+    self = this;
+    this.loading(true);
+    $.ajax({
+      type: 'POST',
+      url: this.url,
+      success: function(response) {
+        tf.services.userBehaviour.trackUnsubscribe(response.current_date);
+        _.delay(function() {
+          return location.reload();
+        }, 500);
+      },
+      error: function(response) {
+        var decoded;
+        self.loading(false);
+        decoded = JSON.parse(response.responseText);
+        if (decoded.error != null) {
+          notify.error(tf.txt.trans(decoded.error[0]));
+        }
+        tf.services.userBehaviour.trackEvent('errorUnsubscribe');
+      }
+    });
+  },
+  loading: function(display) {
+    if (this.$submitButton == null) {
+      this.$submitButton = this.$el.find('button');
+    }
+    if (display) {
+      this.$submitButton.addClass('loading');
+    } else {
+      this.$submitButton.removeClass('loading');
+    }
+  }
+};
+
+/*
+Export class to namespace
+*/
+
+
+namespace("Typeform.Business", function(exports) {
+  return exports.Unsubscribe = Unsubscribe;
+});
+
+var Resubscribe;
+
+Resubscribe = {
+  $el: null,
+  url: '',
+  options: {
+    spinner: {
+      lines: 16,
+      length: 3,
+      width: 3,
+      radius: 10,
+      color: '#ffffff',
+      speed: 2.1,
+      trail: 60,
+      shadow: false,
+      hwaccel: false
+    }
+  },
+  init: function() {
+    var self, spinner;
+    self = this;
+    this.$el = $('#resubscribe-popup');
+    this.$el.on('click', '.admin-button', function() {
+      self.url = $(this).data('action');
+      self.submit();
+      return false;
+    });
+    return spinner = new Spinner(this.options.spinner).spin(this.$el.find('button').children('.spinner')[0]);
+  },
+  submit: function() {
+    var self;
+    self = this;
+    this.loading(true);
+    $.ajax({
+      type: 'POST',
+      url: this.url,
+      success: function(response) {
+        tf.services.userBehaviour.trackResubscribe();
+        _.delay(function() {
+          return location.reload();
+        }, 500);
+      },
+      error: function(response) {
+        var decoded;
+        self.loading(false);
+        decoded = JSON.parse(response.responseText);
+        if (decoded.error != null) {
+          notify.error(decoded.error.message);
+        }
+        tf.services.userBehaviour.trackEvent('errorResubscribe');
+      }
+    });
+  },
+  loading: function(display) {
+    if (this.$submitButton == null) {
+      this.$submitButton = this.$el.find('button');
+    }
+    if (display) {
+      this.$submitButton.addClass('loading');
+    } else {
+      this.$submitButton.removeClass('loading');
+    }
+  }
+};
+
+/*
+Export class to namespace
+*/
+
+
+namespace("Typeform.Business", function(exports) {
+  return exports.Resubscribe = Resubscribe;
+});
+
+var Downgrade;
+
+Downgrade = {
+  $el: null,
+  url: '',
+  options: {
+    spinner: {
+      lines: 16,
+      length: 3,
+      width: 3,
+      radius: 10,
+      color: '#ffffff',
+      speed: 2.1,
+      trail: 60,
+      shadow: false,
+      hwaccel: false
+    }
+  },
+  init: function() {
+    var self, spinner;
+    self = this;
+    this.$el = $('#downgrade-popup');
+    this.$el.on('click', '.admin-button', function() {
+      self.url = $(this).data('action');
+      self.submit();
+      return false;
+    });
+    return spinner = new Spinner(this.options.spinner).spin(this.$el.find('button').children('.spinner')[0]);
+  },
+  submit: function() {
+    var self;
+    self = this;
+    this.loading(true);
+    $.ajax({
+      type: 'POST',
+      url: this.url,
+      success: function(response) {
+        tf.services.userBehaviour.trackDowngrade();
+        _.delay(function() {
+          return location.reload();
+        }, 500);
+      },
+      error: function(response) {
+        var decoded;
+        self.loading(false);
+        decoded = JSON.parse(response.responseText);
+        if (decoded.error != null) {
+          notify.error(tf.txt.trans(decoded.error[0]));
+        }
+        tf.services.userBehaviour.trackEvent('errorDowngrade');
+      }
+    });
+  },
+  loading: function(display) {
+    if (this.$submitButton == null) {
+      this.$submitButton = this.$el.find('button');
+    }
+    if (display) {
+      this.$submitButton.addClass('loading');
+    } else {
+      this.$submitButton.removeClass('loading');
+    }
+  }
+};
+
+/*
+Export class to namespace
+*/
+
+
+namespace("Typeform.Business", function(exports) {
+  return exports.Downgrade = Downgrade;
+});
+
+var PurchaseModel, _ref,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+PurchaseModel = (function(_super) {
+  __extends(PurchaseModel, _super);
+
+  function PurchaseModel() {
+    _ref = PurchaseModel.__super__.constructor.apply(this, arguments);
+    return _ref;
+  }
+
+  PurchaseModel.prototype.defaults = {
+    type: 'credit',
+    amount: 1,
+    min_amount: 1,
+    cost_unit: 0,
+    cost_includes_vat: false,
+    discount: 0,
+    extra: {
+      typeform: '',
+      responses: 0,
+      locked_from: '',
+      locked_to: '',
+      unlocked_to: ''
+    },
+    coupon: '',
+    country: 0,
+    vat_number: '',
+    display_vat: false,
+    cost_total: 0,
+    cost_currency: 'usd'
+  };
+
+  PurchaseModel.prototype.url = function() {
+    return payment_data.actions.sync;
+  };
+
+  PurchaseModel.prototype.isPlan = function() {
+    return this.attributes.type === 'plan_year' || this.attributes.type === 'plan_month';
+  };
+
+  PurchaseModel.prototype.hasLockedResponses = function() {
+    if (this.isPlan()) {
+      return false;
+    }
+    return this.attributes.extra.responses > 0;
+  };
+
+  PurchaseModel.prototype.hasOnlyOneLockedMonth = function() {
+    return this.attributes.min_amount === 1 && this.hasLockedResponses();
+  };
+
+  PurchaseModel.prototype.getExtraAmount = function() {
+    var result;
+    if (this.hasLockedResponses()) {
+      result = this.attributes.amount - this.attributes.min_amount;
+    } else {
+      result = this.attributes.amount;
+    }
+    return Math.max(0, result);
+  };
+
+  PurchaseModel.prototype.canSubstractAmount = function() {
+    return this.attributes.min_amount < this.attributes.amount;
+  };
+
+  PurchaseModel.prototype.isProPlan = function() {
+    return this.attributes.plan === 'pro';
+  };
+
+  PurchaseModel.prototype.isMonthly = function() {
+    return this.attributes.type === 'plan_month';
+  };
+
+  PurchaseModel.prototype.isProPlusPlan = function() {
+    var proPlusNamePattern;
+    proPlusNamePattern = /^pro_plus_\d+/i;
+    return this.attributes.plan === 'pro_plus' || this.isProPlusCustom() || Boolean(this.attributes.plan.match(proPlusNamePattern));
+  };
+
+  PurchaseModel.prototype.isProPlusCustom = function() {
+    return this.attributes.plan === 'pro_plus_custom';
+  };
+
+  PurchaseModel.prototype.updateSeats = function(increase) {
+    return this;
+  };
+
+  return PurchaseModel;
+
+})(Backbone.Model);
+
+namespace("Typeform.Business", function(exports) {
+  return exports.PurchaseModel = PurchaseModel;
+});
+
+/*
+PaymentView
+
+	Contains:
+		- FormView
+		- WidgetView
+		- Vat Checker
+		- Coupon Checker
+
+	Purpose:
+		- Manage Form and Widget Views
+		- Control Checkers
+		- Control Steps: button -> payment -> success
+		- Manage Tab selector
+
+	Steps:
+		0: Proceed button
+		1: Form
+*/
+
+var PaymentView, _ref,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+  __indexOf = [].indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; };
+
+PaymentView = (function(_super) {
+  var reloadPage;
+
+  __extends(PaymentView, _super);
+
+  function PaymentView() {
+    this.showChecker = __bind(this.showChecker, this);
+    this.showSuccess = __bind(this.showSuccess, this);
+    _ref = PaymentView.__super__.constructor.apply(this, arguments);
+    return _ref;
+  }
+
+  PaymentView.prototype.el = '#popup-buy-credit';
+
+  PaymentView.prototype.step = 0;
+
+  PaymentView.prototype.events = {
+    'click #proceed-button': 'next',
+    'click .tip-plan-upgrade a': 'toPlan',
+    'click .tip-plan a': 'toPlan'
+  };
+
+  PaymentView.prototype.defaults = {
+    action: 'subscribe',
+    close_animation: 200,
+    close_delay: 3000,
+    checker_delay: 500
+  };
+
+  PaymentView.prototype.initialize = function(options) {
+    var self;
+    this.options = options;
+    this.options = $.extend({}, this.defaults, this.options);
+    this.ABFeatures = tf.data.ext.json('ABFeatures');
+    this.planSubscriptionMetadata = tf.data.ext.json('planSubscriptionMetadata');
+    this.form = new Typeform.Business.PaymentFormView({
+      userInfoData: this.options.userInfoData,
+      model: this.model,
+      action: this.options.action,
+      card_last4: this.options.card_last4 != null ? this.options.card_last4 : '',
+      onPay: this.showSuccess
+    });
+    this.widget = new Typeform.Business.PaymentWidgetView({
+      model: this.model,
+      paymentForm: this.form,
+      showChecker: this.showChecker
+    });
+    this.checkerRenderer = new Typeform.Business.CheckerRenderer(this.$el, this.options, this.widget);
+    this.coupon_checker = this.checkerRenderer.init(Typeform.Business.Payment, this.coupon_checker, this.model);
+    this.listenTo(this.model, 'change:type', this.renderTabSelector);
+    this.listenTo(this.model, 'change:type', this.checkerRenderer.render.bind(this.checkerRenderer, this.form, this.ABFeatures.isNoCouponInputFieldEnabled, this.model.get('coupon')));
+    this.listenTo(this.model, 'change:type', this.renderTips);
+    this.listenTo(this.model, 'change:type', this.renderSkip);
+    this.listenTo(this.model, 'change:type', this.renderHeader);
+    this.listenTo(this.model, 'change:type', this.changeCheckerPlan);
+    this.listenTo(this.model, 'change:type', this.renderUnableToUpgradeMessage);
+    this.listenTo(this.model, 'change:display_vat', this.renderVAT);
+    this.listenTo(this.model, 'change:min_amount', this.renderTips);
+    this.listenTo(this.model, 'change:extra', this.renderTips);
+    this.listenTo(this.model, 'change:extra', this.renderSkip);
+    this.listenTo(this.model, 'change', this.renderLosingTeamMembersWarning);
+    if (this.options.card_last4 != null) {
+      this.card_last4 = this.options.card_last4;
+    }
+    self = this;
+    this.$el.on('click', '.tab-selector > li', function(e) {
+      var paymentPlanType;
+      paymentPlanType = $(this).data('type');
+      self.model.set({
+        coupon: self.coupon_checker.getValue()
+      });
+      self.model.set({
+        type: paymentPlanType
+      });
+      tf.services.userBehaviour.trackPaymentPlanTabClick(paymentPlanType);
+      if (self.coupon_checker.getValue()) {
+        self.widget.loading(true);
+        return self.coupon_checker.submit();
+      } else {
+        if (!self.proPlusCustomIsSelected(self.widget.model)) {
+          return self.widget.sync();
+        }
+      }
+    });
+    this.step = this.options.action === 'subscribe' ? 0 : 1;
+    return this;
+  };
+
+  PaymentView.prototype.proPlusCustomIsSelected = function(model) {
+    return model.isProPlusCustom();
+  };
+
+  PaymentView.prototype.showSuccess = function(data) {
+    var _this = this;
+    if (data == null) {
+      data = {};
+    }
+    $('body').addClass('payment-close');
+    if (this.options.action === 'update') {
+      reloadPage();
+      return false;
+    }
+    if (this.options.action === 'adjust' && data.action === 'contract') {
+      reloadPage();
+      return false;
+    }
+    Typeform.BusinessTools.PaymentActionTracking.trackAction(this.options.action, data, this.model);
+    _.delay(function() {
+      var view;
+      view = _this.model.isPlan() ? 'payment-success-plan' : 'payment-success-credit';
+      $('body').removeClass('payment-close');
+      return Typeform.Business.executeAction('popup', {
+        view: view,
+        type: _this.model.attributes.type
+      }, function(callbackUrl) {
+        _.delay(function() {
+          if (callbackUrl && callbackUrl.length > 1) {
+            return window.location = callbackUrl;
+          } else {
+            window.location.hash = '';
+            return window.location.reload();
+          }
+        }, _this.options.close_delay);
+        return _this.successAnimation();
+      });
+    }, this.options.close_animation);
+  };
+
+  reloadPage = function() {
+    if (window.page != null) {
+      window.location.hash = window.page;
+    }
+    return window.location.reload();
+  };
+
+  PaymentView.prototype.successAnimation = function() {
+    var _this = this;
+    return _.delay(function() {
+      $('.plan-icon').addClass('anime');
+      return _.delay(function() {
+        $('.title,.info-payment').addClass('anime');
+        return setInterval(function() {
+          return $(".title").toggleClass('opaco');
+        }, 400);
+      }, 20);
+    }, 40);
+  };
+
+  PaymentView.prototype.next = function() {
+    tf.services.userBehaviour.trackProceedToPaymentButtonClick();
+    this.step++;
+    return this.renderContent();
+  };
+
+  PaymentView.prototype.toPlan = function() {
+    this.model.set({
+      type: 'plan_year'
+    });
+    if (!this.proPlusCustomIsSelected(this.model)) {
+      this.widget.sync();
+    }
+  };
+
+  PaymentView.prototype.render = function() {
+    this.renderTabSelector();
+    this.renderWidget();
+    if (this.widget.proPlusCustomIsTheOnlyOption()) {
+      this.renderHeader();
+      this.renderSkip();
+      return this.$el;
+    }
+    this.renderContent();
+    this.checkerRenderer.render.call(this.checkerRenderer, this.form, this.ABFeatures.isNoCouponInputFieldEnabled, this.model.get('coupon'));
+    this.renderTips();
+    this.renderSkip();
+    this.renderHeader();
+    this.renderProFeaturesList();
+    if (Typeform.Business.isProPlan()) {
+      $('body').addClass('is-pro');
+    }
+    this.renderUnableToUpgradeMessage();
+    this.renderLosingTeamMembersWarning();
+    if (this.ABFeatures.isShowExtendedPaymentPage && this.options.action === 'subscribe') {
+      tf.services.userBehaviour.trackProceedToPaymentButtonClick();
+      this.step++;
+      this.renderContent();
+    }
+    return this.$el;
+  };
+
+  PaymentView.prototype.renderWidget = function() {
+    if (this.options.action === 'update') {
+      this.$el.find('.cascading-box').hide();
+      return;
+    }
+    this.widget.render();
+  };
+
+  PaymentView.prototype.renderContent = function() {
+    $('body').alterClass('step-*', 'step-' + this.step);
+    if (this.step === 1) {
+      this.form.render();
+      this.renderVAT();
+      if (this.shouldShowThePaymentFormView()) {
+        this.form.show();
+      } else {
+        this.form.hide();
+      }
+    }
+  };
+
+  PaymentView.prototype.shouldShowThePaymentFormView = function() {
+    return this.widget.isThePlanSelectable || this.options.action === 'go_proplus_yearly';
+  };
+
+  PaymentView.prototype.renderTabSelector = function() {
+    if (!this.shouldDisplayTabSelector()) {
+      return false;
+    }
+    if (this.$tabSelector == null) {
+      this.$tabSelector = this.$el.find('#tab-selector');
+    }
+    this.$tabSelector.empty();
+    if (this.model.isPlan()) {
+      this.$tabSelector.append(Typeform.Business.Payment.template($("#tpl-tab-selector-plan").html()));
+      this.$tabSelector.find('li:[data-type=' + this.model.get('type') + ']').addClass('selected');
+      this.$tabSelector.show();
+    } else {
+      this.$tabSelector.hide();
+    }
+  };
+
+  PaymentView.prototype.shouldDisplayTabSelector = function() {
+    var actionsWithoutTabSelector, _ref1;
+    actionsWithoutTabSelector = ['adjust', 'update', 'go_yearly', 'go_proplus_yearly'];
+    return !((_ref1 = this.options.action, __indexOf.call(actionsWithoutTabSelector, _ref1) >= 0) || this.widget.proPlusCustomIsTheOnlyOption());
+  };
+
+  PaymentView.prototype.renderProFeaturesList = function() {
+    if (this.options.action === 'update') {
+      return;
+    }
+    if (this.model.isPlan()) {
+      this.$el.find('.pro-features-list').removeClass('hidden');
+    }
+  };
+
+  PaymentView.prototype.renderVAT = function() {
+    var model, onChangeCallback, submitData;
+    if (this.vat_checker == null) {
+      model = this.model;
+      onChangeCallback = function(newValue) {
+        return model.set('vat_number', newValue);
+      };
+      submitData = {
+        value: '#checker-vat input',
+        country: '#address_country'
+      };
+      this.vat_checker = this.checkerRenderer.createChecker(Typeform.Business.Payment, 'vat', 'vat_number', submitData, null, onChangeCallback);
+    }
+    if (this.model.get('display_vat')) {
+      this.vat_checker.show();
+      this.vat_checker.$el.parent().find('#info-vat').css('display', 'inline-block');
+      this.form.addVATChecker(this.vat_checker);
+    } else {
+      this.vat_checker.hide();
+      this.vat_checker.$el.parent().find('#info-vat').hide();
+      this.form.removeVATChecker();
+    }
+  };
+
+  PaymentView.prototype.showChecker = function() {
+    if (this.model.get('coupon').length !== 0 || this.ABFeatures.isNoCouponInputFieldEnabled === false) {
+      return this.checkerRenderer.showChecker(this.model.get('coupon'));
+    }
+  };
+
+  PaymentView.prototype.changeCheckerPlan = function() {
+    if (this.model.type === 'credit') {
+      return;
+    }
+    this.coupon_checker.options.extra_data.plan = this.model.get('type');
+  };
+
+  PaymentView.prototype.renderUnableToUpgradeMessage = function() {
+    var $paymentForm, $upgradeAdvice;
+    if (this.options.action === 'upgrade' && Typeform.Business.isProPlan() && Typeform.Business.currentPlanIsYearly()) {
+      $paymentForm = this.$el.find('#payment-form');
+      $upgradeAdvice = this.$el.find('.upgrade-advice');
+      if (this.model.isMonthly()) {
+        $paymentForm.hide();
+        $upgradeAdvice.show();
+      } else {
+        $paymentForm.show();
+        $upgradeAdvice.hide();
+      }
+    }
+  };
+
+  PaymentView.prototype.renderTips = function() {
+    if (Typeform.Business.isProPlan()) {
+      return;
+    }
+    if (this.model.hasLockedResponses() || this.model.isPlan()) {
+      this.$el.find('.tip-plan').hide();
+    } else {
+      this.$el.find('.tip-plan').show();
+    }
+    if (this.model.hasOnlyOneLockedMonth()) {
+      this.$el.find('.tip-plan-upgrade').show();
+    } else {
+      this.$el.find('.tip-plan-upgrade').hide();
+    }
+  };
+
+  PaymentView.prototype.renderSkip = function() {
+    if (this.$skip == null) {
+      this.$skip = this.$el.find('.skip');
+    }
+    if (this.model.hasLockedResponses() || this.model.isPlan()) {
+      this.$skip.hide();
+    } else {
+      this.$skip.show();
+    }
+  };
+
+  PaymentView.prototype.renderLosingTeamMembersWarning = function() {
+    var htmlWarningContent;
+    htmlWarningContent = '';
+    if (this.widget.isLosingTeamMembers()) {
+      htmlWarningContent = Typeform.Business.Payment.template($('#tpl-losing-team-members-warning').html(), {
+        seats: this.widget.getSelectedSeats()
+      });
+    }
+    return this.$el.find('#losing-team-members').html(htmlWarningContent);
+  };
+
+  PaymentView.prototype.renderHeader = function() {
+    var descriptionKey, format, remaining_credits, title;
+    if (this.$title == null) {
+      this.$title = $('#dialog').children('h1');
+    }
+    if (this.$description == null) {
+      this.$description = this.$el.find('.description');
+    }
+    remaining_credits = (function() {
+      try {
+        return payment_data.customer.left_credit || 0;
+      } catch (_error) {}
+    })();
+    title = '';
+    if (this.options.action === 'adjust') {
+      format = 'adjust';
+      descriptionKey = false;
+    } else if (this.options.action === 'update') {
+      format = 'update';
+    } else if (this.options.action === 'go_yearly') {
+      format = 'go_yearly';
+      descriptionKey = 'messages.payment.description-go-yearly_popup-months-free';
+    } else if (this.options.action === 'go_proplus_yearly') {
+      format = 'go_proplus_yearly';
+    } else if (this.model.isPlan()) {
+      format = 'plan';
+      if (this.model.isProPlusPlan()) {
+        format = "" + format + "-plus";
+      }
+    } else if (this.model.hasLockedResponses()) {
+      format = 'credit-unlock';
+      if (parseInt(this.model.get('extra').responses, 10) > 1) {
+        title = '-plur';
+      }
+    } else if (remaining_credits > 0) {
+      format = 'credit-more';
+    } else {
+      format = 'credit';
+    }
+    this.$title.html(Typeform.Business.Payment.template(translate('messages.business-payment-title-' + format + title), {
+      responses: this.model.get('extra').responses
+    }));
+    if (descriptionKey == null) {
+      descriptionKey = 'messages.business-payment-description-' + format;
+    }
+    if (descriptionKey !== false) {
+      this.$description.html(Typeform.Business.Payment.template(translate(descriptionKey, {
+        monthsFree: this.planSubscriptionMetadata['months_free']
+      }), {
+        credits: remaining_credits,
+        period: this.widget.printLockPeriod()
+      }));
+    }
+  };
+
+  return PaymentView;
+
+})(Backbone.View);
+
+/*
+Export class to namespace
+*/
+
+
+namespace("Typeform.Business", function(exports) {
+  return exports.PaymentView = PaymentView;
+});
+
+var PaymentWidgetView, _ref,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+PaymentWidgetView = (function(_super) {
+  var calculateCostUnit, calculateTotalAmount, setDOMModifiers;
+
+  __extends(PaymentWidgetView, _super);
+
+  function PaymentWidgetView() {
+    _ref = PaymentWidgetView.__super__.constructor.apply(this, arguments);
+    return _ref;
+  }
+
+  PaymentWidgetView.prototype.el = '#payment-widget';
+
+  PaymentWidgetView.prototype.events = {
+    'click .reset': 'reset',
+    'change .plan-selector': 'changePlanOfTheSameType'
+  };
+
+  PaymentWidgetView.prototype.spinner_options = {
+    color: '#C8E5CE'
+  };
+
+  PaymentWidgetView.prototype.proceedButton = null;
+
+  PaymentWidgetView.prototype.isThePlanSelectable = true;
+
+  PaymentWidgetView.prototype.initialize = function(options) {
+    this.paymentForm = options.paymentForm;
+    this.showChecker = options.showChecker;
+    this.listenTo(this.model, 'change', this.render);
+    return this;
+  };
+
+  PaymentWidgetView.prototype.getTemplate = function() {
+    var plan, type;
+    if (!(this.model.has('plan') && this.model.has('type'))) {
+      throw new Error('Both plan an type must be specified.');
+    }
+    type = this.model.get('type');
+    plan = this.model.isProPlusPlan() ? 'pro_plus' : this.model.get('plan');
+    return "" + plan + "-" + type;
+  };
+
+  PaymentWidgetView.prototype.reset = function() {
+    this.model.set({
+      amount: this.model.get('min_amount')
+    });
+    this.sync();
+  };
+
+  PaymentWidgetView.prototype.serializeData = function() {
+    var data, extra, modelJSON;
+    extra = this.model.get('extra');
+    modelJSON = this.model.toJSON();
+    data = {
+      total: calculateTotalAmount(modelJSON),
+      responses: this.printResponses(parseInt(extra.responses, 10)),
+      locked_from: extra.locked_from,
+      locked_to: extra.locked_to,
+      locked_period: this.printLockPeriod(),
+      cost_unit: calculateCostUnit(modelJSON),
+      extra: this.printExtraAmount(),
+      result_period: this.printUnlockPeriod(),
+      result_dates: this.printUnlockDate()
+    };
+    return _.extend({}, this.model.toJSON(), data);
+  };
+
+  calculateTotalAmount = function(data) {
+    var amount;
+    amount = Math.ceil(data.cost_charge / 100);
+    return Typeform.Business.formatByCurrency(amount, data.cost_currency, true);
+  };
+
+  calculateCostUnit = function(data) {
+    var amount;
+    amount = Math.ceil(data.cost_unit / 100);
+    return Typeform.Business.formatByCurrency(amount, data.cost_currency, false);
+  };
+
+  setDOMModifiers = function() {
+    if (this.model.get('cost_includes_vat')) {
+      this.$el.addClass('vat-included');
+    } else {
+      this.$el.removeClass('vat-included');
+    }
+    if (this.model.getExtraAmount() === 0) {
+      this.$el.removeClass('extra');
+    } else {
+      this.$el.addClass('extra');
+    }
+    this.$el.parent().toggleClass('pro-plus', this.model.isProPlusPlan());
+    Typeform.Spinner(this.$el.siblings('.loader').children('.spinner'), this.spinner_options);
+    return this.el;
+  };
+
+  PaymentWidgetView.prototype.render = function() {
+    var dom, template, templateData, templateSelector;
+    templateSelector = this.getTemplate();
+    this.$el.alterClass('tpl-*', 'tpl-' + templateSelector);
+    template = $('#tpl-widget-' + templateSelector).html();
+    templateData = this.serializeData();
+    dom = Typeform.Business.Payment.template(template, templateData);
+    this.$el.html(dom);
+    if (this.proceedButton == null) {
+      this.proceedButton = $(this.$el.data('proceed-button'));
+    }
+    setDOMModifiers.call(this);
+    if (this.model.isProPlusPlan()) {
+      this.attachProPlusBehaviour();
+    }
+    if (this.model.isProPlusCustom()) {
+      this.showProPlusCustomWarning();
+    }
+    return this.$el;
+  };
+
+  PaymentWidgetView.prototype.attachProPlusBehaviour = function() {
+    var $planSelector;
+    $planSelector = this.findPlanSelector();
+    $planSelector.val(this.model.get('plan'));
+    $planSelector.select2({
+      minimumResultsForSearch: -1,
+      dropdownCssClass: 'total-price-plan-selector-results select2-primary-results'
+    });
+    this.isThePlanSelectable = $planSelector.find('option[selected][disabled]').length === 0;
+    return this.proceedButton.prop('disabled', !this.isThePlanSelectable);
+  };
+
+  PaymentWidgetView.prototype.printExtraAmount = function() {
+    var extra_amount;
+    extra_amount = this.model.getExtraAmount();
+    return extra_amount + ' ' + (extra_amount === 1 ? translate('messages.business-payment-month') : translate('messages.business-payment-months'));
+  };
+
+  PaymentWidgetView.prototype.printLockPeriod = function() {
+    return this.printPeriod(this.model.get('extra').locked_months, this.model.get('extra').locked_days);
+  };
+
+  PaymentWidgetView.prototype.printUnlockPeriod = function() {
+    return this.printPeriod(this.model.get('extra').unlocked_months, this.model.get('extra').unlocked_days);
+  };
+
+  PaymentWidgetView.prototype.printPeriod = function(months, days) {
+    var result;
+    result = '';
+    if (months) {
+      result += months + ' ' + (months === 1 ? translate('messages.business-payment-month') : translate('messages.business-payment-months'));
+    }
+    if (days) {
+      if (months) {
+        result += ' + ';
+      }
+      result += days + ' ' + (days === 1 ? translate('messages.business-payment-day') : translate('messages.business-payment-days'));
+    }
+    return result || 0 + ' ' + translate('messages.business-payment-days');
+  };
+
+  PaymentWidgetView.prototype.printResponses = function(responses) {
+    return responses + ' ' + (responses === 1 ? translate('messages.business-payment-response') : translate('messages.business-payment-responses'));
+  };
+
+  PaymentWidgetView.prototype.printUnlockDate = function() {
+    return '(' + this.model.get('extra').locked_from + '-' + this.model.get('extra').unlocks_to + ')';
+  };
+
+  PaymentWidgetView.prototype.loading = function(display) {
+    $('body').toggleClass('payment-sync', display);
+  };
+
+  PaymentWidgetView.prototype.proPlusCustomIsTheOnlyOption = function() {
+    var $planSelector;
+    $planSelector = this.findPlanSelector();
+    return $planSelector.find('option').length === 1;
+  };
+
+  PaymentWidgetView.prototype.changePlanOfTheSameType = function(evt) {
+    var plan;
+    plan = $(evt.currentTarget).val();
+    this.model.set('plan', plan);
+    if (plan === 'pro_plus_custom') {
+      this.showProPlusCustomWarning();
+    } else {
+      this.hideProPlusCustomWarning();
+      this.proceedButton.prop('disabled', false);
+      this.paymentForm.show();
+      this.sync();
+    }
+  };
+
+  PaymentWidgetView.prototype.getSelectedSeats = function() {
+    return this.findPlanSelector().find(':selected').data('seats');
+  };
+
+  PaymentWidgetView.prototype.isLosingTeamMembers = function() {
+    var seats, teamSnapshot;
+    teamSnapshot = tf.data.ext.json('payment_settings').raw_team_snapshot;
+    if (!teamSnapshot) {
+      return false;
+    }
+    seats = this.getSelectedSeats();
+    return teamSnapshot.reserved_seats > seats;
+  };
+
+  PaymentWidgetView.prototype.hideProPlusCustomWarning = function() {
+    this.$el.find('.pro-plus-custom-warning').hide();
+    this.$el.find('.total-price-amount').show();
+    this.$el.find('.total-price-notes').show();
+    this.showChecker();
+    this.proceedButton.prop('disabled', true);
+    return this.proceedButton.removeAttr('style');
+  };
+
+  PaymentWidgetView.prototype.showProPlusCustomWarning = function() {
+    this.$el.find('.pro-plus-custom-warning').show();
+    this.$el.find('.total-price-amount').hide();
+    this.$el.find('.total-price-notes').hide();
+    this.$el.parent().find('#checker-coupon').hide();
+    this.proceedButton.hide();
+    return this.paymentForm.hide();
+  };
+
+  PaymentWidgetView.prototype.sync = function() {
+    var self;
+    self = this;
+    this.loading(true);
+    return this.model.sync('create', this.model, {
+      success: function(data) {
+        return self.model.set(data);
+      },
+      error: function(response) {
+        var decoded;
+        decoded = JSON.parse(response.responseText);
+        return notify.error(tf.txt.trans(decoded.error[0]));
+      },
+      complete: function() {
+        return self.loading(false);
+      }
+    });
+  };
+
+  PaymentWidgetView.prototype.findPlanSelector = function() {
+    return this.$el.find('.plan-selector');
+  };
+
+  return PaymentWidgetView;
+
+})(Backbone.View);
+
+/*
+Export class to namespace
+*/
+
+
+namespace("Typeform.Business", function(exports) {
+  return exports.PaymentWidgetView = PaymentWidgetView;
+});
+
+var PaymentFormView, plans, _ref,
+  __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+plans = tf.services.plans;
+
+PaymentFormView = (function(_super) {
+  __extends(PaymentFormView, _super);
+
+  function PaymentFormView() {
+    this.renderErrors = __bind(this.renderErrors, this);
+    _ref = PaymentFormView.__super__.constructor.apply(this, arguments);
+    return _ref;
+  }
+
+  PaymentFormView.prototype.el = '#payment-form';
+
+  PaymentFormView.prototype.events = {
+    'submit': 'trySubmit',
+    'click #used-card a': 'editCard',
+    'change #address_country': 'changeCountry'
+  };
+
+  PaymentFormView.prototype.defaults = {
+    scroll_duration: 200,
+    action: 'charge',
+    card_last4: '',
+    onPay: function() {},
+    spinner: {
+      radius: 10,
+      color: '#ffffff'
+    }
+  };
+
+  PaymentFormView.prototype.initialize = function(options) {
+    this.options = options;
+    Stripe.setPublishableKey(Typeform.Business.Payment.payment_data.stripe_key);
+    this.options = $.extend({}, this.defaults, this.options);
+    this.validator = new Typeform.Utils.FormErrorValidator(this.$el, {
+      render: this.renderErrors,
+      validations: [
+        {
+          id: 'empty_name',
+          selector: '#name',
+          validator: 'completed'
+        }, {
+          id: 'empty_country',
+          selector: '#address_country',
+          validator: 'completed'
+        }, {
+          id: 'empty_billing_name',
+          selector: '#billing_name',
+          validator: 'completed'
+        }, {
+          id: 'empty_address',
+          selector: '#address_line1',
+          validator: 'completed'
+        }, {
+          id: 'empty_city',
+          selector: '#city',
+          validator: 'completed'
+        }, {
+          id: 'empty_zip',
+          selector: '#address_zip',
+          validator: 'completed'
+        }, {
+          id: 'must_agree',
+          selector: '#terms',
+          validator: 'checked'
+        }
+      ]
+    });
+    this.$el.on('focus', 'input', function() {
+      $(this).removeClass('error');
+    });
+    this.$el.on('change', 'select', function() {
+      if ($(this).data('select2') != null) {
+        $(this).data('select2').container.removeClass('error');
+      }
+    });
+    this.listenTo(this.model, 'change:cost_total', this.checkCardState);
+    this.listenTo(this.model, 'change:display_vat', this.renderBillingInformation);
+    this.listenTo(this.model, 'change:type', this.setTypeClass);
+    return this;
+  };
+
+  PaymentFormView.prototype.show = function() {
+    this.$el.hide().slideDown(this.options.scroll_duration);
+  };
+
+  PaymentFormView.prototype.hide = function() {
+    this.$el.hide();
+  };
+
+  PaymentFormView.prototype.getToken = function() {
+    var _this = this;
+    this.loading(true);
+    Stripe.card.createToken(this.$el, function(status, response) {
+      var validate;
+      if (_this.last_stripe_error) {
+        _this.validator.removeError({
+          id: _this.last_stripe_error
+        });
+      }
+      validate = _this.validator.validate();
+      if (response.error) {
+        _this.last_stripe_error = response.error.code;
+        _this.validator.addError({
+          id: response.error.code,
+          selector: '#' + response.error.param
+        });
+        validate = false;
+      }
+      if (validate) {
+        return _this.submit(response.id);
+      } else {
+        _this.loading(false);
+        return _this.showErrors();
+      }
+    });
+    return false;
+  };
+
+  PaymentFormView.prototype.renderErrors = function(errors) {
+    var valid_errors;
+    this.$errors.empty();
+    _.each(errors, function(error) {
+      var $el;
+      $el = $(error.selector);
+      if ($el.data('select2') != null) {
+        return $el.data('select2').container.addClass('error');
+      } else {
+        return $el.addClass('error');
+      }
+    });
+    valid_errors = _.filter(errors, function(e) {
+      return (e.id != null) && e.id !== '';
+    });
+    this.$errors.html(Typeform.Business.Payment.template($('#tpl-form-error').html(), {
+      errors: _.map(valid_errors, function(error) {
+        return tf.txt.trans(error.id);
+      })
+    }));
+  };
+
+  PaymentFormView.prototype.trySubmit = function(evt) {
+    var _this = this;
+    if (this.vatChecker && this.vatChecker.isWrong()) {
+      return false;
+    }
+    if (this.vatChecker && this.vatChecker.needsValidation()) {
+      this.vatChecker.submit().always(function() {
+        return _this.$el.submit();
+      });
+      return false;
+    }
+    this.hideErrors();
+    if (this.options.card_last4 === '' || this.options.action === 'update') {
+      this.getToken();
+    } else {
+      this.submit('');
+    }
+    return false;
+  };
+
+  PaymentFormView.prototype.submit = function(token) {
+    var self,
+      _this = this;
+    if (token == null) {
+      token = '';
+    }
+    self = this;
+    this.loading(true);
+    if (this.prevent_submit) {
+      return;
+    }
+    this.prevent_submit = true;
+    $.ajax({
+      type: 'POST',
+      url: this.getUrl(this.options.action),
+      data: {
+        card_token: token,
+        purchase: this.model.toJSON(),
+        action: this.options.action,
+        billing_extra: {
+          name: this.$el.find('#billing_name').val(),
+          tax_id: this.$el.find('#tax_id').val()
+        }
+      },
+      success: function(response) {
+        _this.options.onPay(response.data);
+        tf.services.userBehaviour.trackEvent('submitFormPaymentSuccess');
+      },
+      error: function(response) {
+        var error, result;
+        error = {};
+        try {
+          result = JSON.parse(response.responseText);
+          error = [
+            {
+              id: result.error.code
+            }
+          ];
+        } catch (_error) {}
+        self.renderErrors(error);
+        self.showErrors();
+        if (self.options !== 'update') {
+          self.widgetSync();
+        }
+      },
+      complete: function() {
+        self.prevent_submit = false;
+        return self.loading(false);
+      }
+    });
+  };
+
+  PaymentFormView.prototype.getUrl = function(action) {
+    var url;
+    url = action === "update" ? "update" : "submit";
+    return Typeform.Business.Payment.payment_data.actions.urls[url];
+  };
+
+  PaymentFormView.prototype.loading = function(display) {
+    if (this.$submitButton == null) {
+      this.$submitButton = this.$el.find('button:submit');
+    }
+    if (display) {
+      this.$submitButton.addClass('loading');
+      this.showLoadingAdvice(true);
+    } else {
+      this.$submitButton.removeClass('loading');
+      this.showLoadingAdvice(false);
+    }
+  };
+
+  PaymentFormView.prototype.showLoadingAdvice = function(display) {
+    var message;
+    if (this.$processingAdvice == null) {
+      this.$processingAdvice = this.$el.find('.processing-advice');
+    }
+    message = tf.txt.trans('messages.business-payment-processing');
+    if (this.options.action === 'adjust' && this.resolveAdjustAction() === 'contract') {
+      message = tf.txt.trans('messages.account.plan_change.update_message');
+    }
+    this.$processingAdvice.html(message);
+    if (display) {
+      this.$processingAdvice.show();
+    } else {
+      this.$processingAdvice.hide();
+    }
+  };
+
+  PaymentFormView.prototype.render = function() {
+    this.$el.html(Typeform.Business.Payment.template($('#tpl-form').html()));
+    this.checkCardState();
+    this.$el.find('#address_country').val(this.model.get('country')).select2({
+      minimumResultsForSearch: 5,
+      width: '219px'
+    });
+    this.$el.find('#exp_month,#exp_year').select2({
+      minimumResultsForSearch: 999,
+      width: '90px'
+    });
+    this.$errors = this.$el.find('.errors');
+    this.$errors.hide();
+    Typeform.Spinner(this.$el.find('button:submit').children('.spinner'), this.options.spinner);
+    this.renderBillingInformation();
+    this.setTypeClass();
+    this.showLoadingAdvice(false);
+    return this.$el;
+  };
+
+  PaymentFormView.prototype.setTypeClass = function() {
+    this.$el.alterClass('type-*', 'type-' + this.model.get('type'));
+  };
+
+  PaymentFormView.prototype.editCard = function() {
+    this.options.card_last4 = '';
+    this.checkCardState();
+    return false;
+  };
+
+  PaymentFormView.prototype.checkCardState = function() {
+    var action;
+    if (this.options.card_last4 === '' || this.options.action === 'update') {
+      this.$el.addClass('edit-card');
+    } else {
+      action = 'charge';
+      if (this.options.action === 'upgrade') {
+        action = 'upgrade';
+      }
+      if (this.options.action === 'adjust') {
+        action = this.resolveAdjustAction();
+      }
+      if (this.options.action === 'go_yearly') {
+        action = 'go_yearly';
+      }
+      if (this.options.action === 'go_proplus_yearly') {
+        action = 'go_proplus_yearly';
+      }
+      this.$el.find('#used-card').html(Typeform.Business.Payment.template($('#tpl-form-used-card-' + action).html(), {
+        numberOfSeats: this.model.get('numberOfSeats'),
+        price: Typeform.Business.formatByCurrency(this.model.get('cost_total'), this.model.get('cost_currency')),
+        card: this.options.card_last4
+      }));
+      this.$el.removeClass('edit-card');
+    }
+  };
+
+  PaymentFormView.prototype.getAction = function() {
+    return this.options.action;
+  };
+
+  PaymentFormView.prototype.resolveAdjustAction = function() {
+    var adjustAction, currentLimitName, currentLimitNumberOfSeats, targetLimitNumberOfSeats;
+    currentLimitName = this.options.userInfoData.plan;
+    currentLimitNumberOfSeats = plans.getNumberOfSeats(currentLimitName);
+    targetLimitNumberOfSeats = this.model.get('numberOfSeats');
+    adjustAction = 'adjust';
+    if (currentLimitNumberOfSeats > targetLimitNumberOfSeats) {
+      adjustAction = 'contract';
+    }
+    if (currentLimitNumberOfSeats < targetLimitNumberOfSeats) {
+      adjustAction = 'expand';
+    }
+    return adjustAction;
+  };
+
+  PaymentFormView.prototype.showErrors = function() {
+    this.$errors.show();
+    this.scrollTo(this.$el);
+  };
+
+  PaymentFormView.prototype.hideErrors = function() {
+    return this.$errors.hide();
+  };
+
+  PaymentFormView.prototype.renderBillingInformation = function() {
+    var tpl;
+    if (this.$billingInfo == null) {
+      this.$billingInfo = this.$el.find('#billing-information');
+    }
+    tpl = '#tpl-billing-information-vat-' + this.model.get('display_vat');
+    this.$billingInfo.html($(tpl).html());
+  };
+
+  PaymentFormView.prototype.changeCountry = function(obj) {
+    var checker;
+    this.model.set({
+      country: obj.val
+    });
+    checker = Typeform.Business.Payment.view.vat_checker;
+    if (_.isEmpty(checker.getValue())) {
+      this.widgetSync();
+    } else {
+      checker.submit();
+    }
+    this.scrollTo($('#payment-widget'));
+  };
+
+  PaymentFormView.prototype.scrollTo = function($el) {
+    if (this.$scrollElem == null) {
+      this.$scrollElem = $('#outer');
+    }
+    this.$scrollElem.animate({
+      scrollTop: $el.offset().top + this.$scrollElem.scrollTop() - 20
+    }, this.options.scroll_duration);
+  };
+
+  PaymentFormView.prototype.widgetSync = function() {
+    Typeform.Business.Payment.view.widget.sync();
+  };
+
+  PaymentFormView.prototype.addVATChecker = function(vatChecker) {
+    return this.vatChecker = vatChecker;
+  };
+
+  PaymentFormView.prototype.removeVATChecker = function() {
+    return this.vatChecker = null;
+  };
+
+  return PaymentFormView;
+
+})(Backbone.View);
+
+/*
+Export class to namespace
+*/
+
+
+namespace("Typeform.Business", function(exports) {
+  return exports.PaymentFormView = PaymentFormView;
+});
+
+var Checker;
+
+Checker = (function() {
+  var DEFAULT, ERROR, SUCCESS, VOID;
+
+  Checker.prototype.$el = null;
+
+  VOID = 'void';
+
+  DEFAULT = 'default';
+
+  SUCCESS = 'success';
+
+  ERROR = 'error';
+
+  Checker.prototype.state = VOID;
+
+  Checker.prototype.defaults = {
+    value: '',
+    template: '#tpl-checker',
+    url: '',
+    onChange: function() {},
+    onComplete: function() {},
+    spinner: {
+      width: 2,
+      radius: 5,
+      color: '#ffffff'
+    },
+    submit_data: {
+      value: 'input'
+    },
+    extra_data: null,
+    isProPlus: false
+  };
+
+  function Checker($el, options) {
+    this.$el = $el;
+    this.options = options;
+    this.options = $.extend({}, this.defaults, this.options);
+  }
+
+  Checker.prototype.init = function() {
+    this.bindEvents();
+    this.render();
+    this.refreshState();
+    if (!_.isEmpty(this.options.value)) {
+      this.submit();
+    }
+  };
+
+  Checker.prototype.getValue = function() {
+    return this.$el.find('input').val();
+  };
+
+  Checker.prototype.bindEvents = function() {
+    var self;
+    self = this;
+    this.$el.on('keyup', 'input', function(e) {
+      var key;
+      key = document.all ? e.keyCode : e.which;
+      if (key === 13) {
+        self.submit();
+      }
+    });
+    this.$el.on('input', 'input', function(e) {
+      var value;
+      value = $(this).val();
+      if (value === '') {
+        self.toState(VOID);
+      } else {
+        self.toState(DEFAULT);
+      }
+      self.options.onChange(value);
+    });
+    this.$el.on('click', '.admin-button', function() {
+      self.submit();
+    });
+  };
+
+  Checker.prototype.render = function() {
+    this.$el.html(Typeform.Business.Payment.template($(this.options.template).html(), {
+      value: this.options.value
+    }));
+    Typeform.Spinner(this.$el.find('.admin-button').children('.spinner'), this.options.spinner);
+  };
+
+  Checker.prototype.toState = function(state) {
+    this.state = state;
+    this.refreshState();
+    if (this.state === SUCCESS) {
+      this.$el.find('input').blur();
+    }
+  };
+
+  Checker.prototype.refreshState = function() {
+    this.$el.alterClass('state-*', 'state-' + this.state);
+  };
+
+  Checker.prototype.show = function(forceCoupon) {
+    if (forceCoupon) {
+      this.$el.find('input').val(forceCoupon);
+    }
+    this.$el.show();
+  };
+
+  Checker.prototype.hide = function() {
+    this.$el.hide();
+  };
+
+  Checker.prototype.loading = function(display) {
+    if (this.$submitButton == null) {
+      this.$submitButton = this.$el.find('.admin-button');
+    }
+    if (display) {
+      this.$submitButton.addClass('loading');
+    } else {
+      this.$submitButton.removeClass('loading');
+    }
+  };
+
+  Checker.prototype.message = function(display, text) {
+    if (display == null) {
+      display = false;
+    }
+    if (text == null) {
+      text = '';
+    }
+    if (!this.$message) {
+      this.getMessage();
+    }
+    this.$message.children('span').html(text);
+    if (display) {
+      this.$message.show();
+    } else {
+      this.$message.hide();
+    }
+  };
+
+  Checker.prototype.getMessage = function() {
+    this.$message = this.$el.find('.checker-message');
+    if (this.options.extra_data && this.options.extra_data.isProPlus) {
+      return this.$message.addClass('pro-plus-offset');
+    }
+  };
+
+  Checker.prototype.submit = function() {
+    var data, key, selector, self, _ref;
+    self = this;
+    this.loading(true);
+    this.message(false);
+    data = {};
+    _ref = this.options.submit_data;
+    for (key in _ref) {
+      selector = _ref[key];
+      data[key] = $(selector).val();
+    }
+    data = _.extend({}, this.options.extra_data, data);
+    return $.ajax({
+      type: 'POST',
+      url: this.options.url,
+      data: data,
+      success: function(response) {
+        self.toState(SUCCESS);
+        try {
+          if (response.data != null) {
+            self.message(true, response.data);
+          }
+        } catch (_error) {}
+      },
+      error: function(response) {
+        var decoded;
+        self.toState(ERROR);
+        try {
+          decoded = JSON.parse(response.responseText);
+          if (decoded.error[0] != null) {
+            self.message(true, tf.txt.trans(decoded.error[0]));
+          }
+        } catch (_error) {}
+      },
+      complete: function() {
+        self.loading(false);
+        if (data.value != null) {
+          self.options.onComplete(data.value);
+        }
+      }
+    });
+  };
+
+  Checker.prototype.needsValidation = function() {
+    return this.state === DEFAULT;
+  };
+
+  Checker.prototype.isWrong = function() {
+    return this.state === ERROR;
+  };
+
+  return Checker;
+
+})();
+
+/*
+Export class to namespace
+*/
+
+
+namespace("Typeform.Business.Payment", function(exports) {
+  return exports.Checker = Checker;
+});
+
+const COUPON = 'coupon';
+const ADJUST = 'adjust';
+const TYPE = 'type';
+const CHECK_PREFIX = 'check_';
+const CHECKER_COUPON_CLASS = '#checker-coupon input';
+const TEMPLATE_CHECKER = '#tpl-checker-';
+const CHECKER_ID = '#checker-';
+
+var CheckerRenderer = function CheckerRenderer ($el, options, widget) {
+    this.$el = $el;
+    this.options = options;
+    this.widget = widget;
+
+    this.init = function (paymentService, couponChecker, model) {
+        this.model = model;
+        this.couponChecker = couponChecker;
+
+        var couponValue = {
+            value: CHECKER_COUPON_CLASS
+        };
+        var paymentType = {
+            plan: model.get(TYPE),
+            isProPlus: model.isProPlusPlan()
+        };
+        var callback = function(val) {
+            return model.set({
+                coupon: val
+            });
+        };
+
+        if (!this.couponChecker) {
+            this.couponChecker = this.createChecker(
+                paymentService,
+                COUPON,
+                COUPON,
+                couponValue,
+                paymentType,
+                callback
+            );
+        }
+        return this.couponChecker;
+    }
+
+    this.render = function (form, isNoCouponInputFieldEnabled, forceCoupon) {
+        if (!isNoCouponInputFieldEnabled && this.model.isPlan() && form.getAction() !== ADJUST) {
+            this.couponChecker.show(forceCoupon);
+        } else if (forceCoupon) {
+            this.couponChecker.show(forceCoupon);
+        } else {
+           this.couponChecker.hide();
+        }
+    }
+
+    this.createChecker = function (paymentService, type, modelAttr, submitData, extraData, onChange) {
+        if (onChange === null) {
+            onChange = function () {};
+        }
+        var self = this;
+
+        var checker = new paymentService.Checker(this.$el.find(CHECKER_ID + type), {
+            template: TEMPLATE_CHECKER + type,
+            value: self.model.get(modelAttr),
+            url: paymentService.payment_data.actions[CHECK_PREFIX + type],
+            submit_data: submitData,
+            extra_data: extraData,
+            onChange: onChange,
+            onComplete: function(result) {
+                _.delay(function() {
+                    self.model.set(modelAttr, result);
+                    return self.widget.sync();
+                }, self.options.checker_delay);
+            }
+        });
+        checker.init();
+
+        return checker;
+    }
+
+    this.showChecker = function (forceCoupon) {
+        this.couponChecker.show(forceCoupon);
+    }
+};
+
+/*
+Export class to namespace
+*/
+namespace('Typeform.Business', function (exports) {
+    exports.CheckerRenderer = CheckerRenderer;
+});
+
+const HashLocationActions = function HashLocationActions (paymentRoutesService, landingPreviewForm) {
+
+    function openPaymentPopup () {
+        paymentRoutesService.showGoPro()
+    }
+
+    function openPaymentPopupPlus () {
+        paymentRoutesService.showGoProPlus()
+    }
+
+    function openAdjustPopup () {
+        paymentRoutesService.showAdjust()
+    }
+
+    function showLandingPreview () {
+        landingPreviewForm.show()
+    }
+
+    return {
+        showLandingPreview: showLandingPreview,
+        openPaymentPopup: openPaymentPopup,
+        openPaymentPopupPlus: openPaymentPopupPlus,
+        openAdjustPopup: openAdjustPopup
+    }
+};
+
+/*
+ Export class to namespace
+ */
+namespace('Typeform.BusinessTools', function (exports) {
+    exports.HashLocationActions = HashLocationActions;
+});
+
+var WindowUnloadService;
+
+WindowUnloadService = (function() {
+  function WindowUnloadService() {}
+
+  WindowUnloadService.prototype.remove = function() {
+    var _this = this;
+    return $(window).on('beforeunload', function() {
+      return null;
+    });
+  };
+
+  WindowUnloadService.prototype.injectToDesign = function() {
+    var _this = this;
+    return $(window).on('beforeunload', function() {
+      return translate('design-unapplied-changes-exit');
+    });
+  };
+
+  return WindowUnloadService;
+
+})();
+
+namespace("tf.services", function(exports) {
+  return exports.WindowUnload = WindowUnloadService;
+});
+
+var SocialMediaView, socialMediaView, _ref,
+  __hasProp = {}.hasOwnProperty,
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
+
+SocialMediaView = (function(_super) {
+  var getUrlDestination;
+
+  __extends(SocialMediaView, _super);
+
+  function SocialMediaView() {
+    _ref = SocialMediaView.__super__.constructor.apply(this, arguments);
+    return _ref;
+  }
+
+  SocialMediaView.prototype.events = {
+    'click .social-media-button': 'action'
+  };
+
+  SocialMediaView.prototype.initialize = function(options) {
+    this.trackUserBehaviour = options.trackUserBehaviour;
+    this.adminHostname = options.adminHostname;
+    return this;
+  };
+
+  SocialMediaView.prototype.action = function(elem) {
+    var eventname,
+      _this = this;
+    eventname = $(elem.target).data('eventname');
+    this.trackUserBehaviour.trackEvent(eventname);
+    _.delay((function() {
+      return window.location.href = getUrlDestination.call(_this, elem);
+    }), 800);
+    return false;
+  };
+
+  getUrlDestination = function(elem) {
+    var eventname;
+    eventname = $(elem.target).data('eventname');
+    if (document.domain !== this.adminHostname) {
+      return window.location.href.replace(document.domain, this.adminHostname) + '#' + eventname;
+    } else {
+      return $(elem.target).data('href');
+    }
+  };
+
+  return SocialMediaView;
+
+})(Backbone.View);
+
+namespace("tf.services", function(exports) {
+  return exports.socialMediaView = SocialMediaView;
+});
+
+socialMediaView = new tf.services.socialMediaView({
+  el: '.social-media-signup',
+  trackUserBehaviour: tf.services.userBehaviour,
+  adminHostname: Typeform.DataService.get('adminHostname')
+});
+
+(function() {
+    function ExitIntentSurvey(userData, saveAccountPopup) {
+        var EXIT_INTENT_SIGNUP_POPUP_SHOWN_SESSION_STORAGE_KEY = 'exit-intent-signup-popup-shown';
+
+        var initialise = function () {
+            if (isDemoUser() && hasCreatedTypeforms()) {
+                bindWindowExitListener();   
+            }
+        };
+
+        var isDemoUser = function() {
+            return userData.isDemoUser;
+        };
+
+        var hasCreatedTypeforms = function () {
+            return userData.hasCreatedForms;
+        };
+
+        var isAnotherPopupAlreadyOpen = function () {
+            var typeformOverlay = $('#typeform-overlay');
+            var commonOverlay = $('#overlay');
+
+            return $('#dialog-wrapper.fullscreen, .cutout-overlay, #save-account-wrapper.open').is(':visible')
+                || (typeformOverlay.length > 0 && typeformOverlay.css('visibility') !== 'hidden')
+                || (commonOverlay.length > 0 && commonOverlay.css('visibility') !== 'hidden');
+        };
+
+        var setExitIntentSignupPopupAsShown = function () {
+            window.sessionStorage.setItem(EXIT_INTENT_SIGNUP_POPUP_SHOWN_SESSION_STORAGE_KEY, true);
+        };
+
+        var hasExitIntentSignupPopupBeenShown = function () {
+            return !!window.sessionStorage.getItem(EXIT_INTENT_SIGNUP_POPUP_SHOWN_SESSION_STORAGE_KEY);
+        };
+
+        var onMouseLeaveWindow = function () {
+            if (!saveAccountPopup.isShown() && !hasExitIntentSignupPopupBeenShown() && !isAnotherPopupAlreadyOpen()) {
+                setExitIntentSignupPopupAsShown();
+                saveAccountPopup.openSignupExitIntent();
+            }
+        };
+
+        var bindWindowExitListener = function () {
+            $(document).mouseleave(onMouseLeaveWindow);
+        };
+
+        return {
+            initialise: initialise
+        }
+    }
+
+    var exitIntentSurvey = new ExitIntentSurvey(Typeform.DataService.get('userInfoData'), window.saveAccountPopup);
+    exitIntentSurvey.initialise();
+
+    namespace('tf.components.popup', function(exports) {
+        return exports.ExitIntentSurvey = ExitIntentSurvey;
+    });
+})();
+
+var BuilderOnboardingTutorial = function BuilderOnboardingTutorial() {
+
+    var SURVEY_URL = 'https://hellofrom.typeform.com/to/g52Jyk';
+
+    this.launchTutorial = function (shouldShowTutorial) {
+        if (shouldShowTutorial) {
+            window.typeformEmbed.makePopup(SURVEY_URL, {mode: 'drawer_left', autoOpen: true});
+        }
+    };
+};
+
+namespace('tf.components.popup', function(exports) {
+    return exports.BuilderOnboardingTutorial = new BuilderOnboardingTutorial();
+});
+
+(function () {
+
+    var stringUtils = {
+        toUnderscore: function (str)
+        {
+        	return str.replace(/([A-Z])/g, function($1){return "_"+$1.toLowerCase();});
+        }
+    };
+
+    namespace('tf.utils', function(exports) {
+        return exports.StringUtils = stringUtils;
+    });
+})();

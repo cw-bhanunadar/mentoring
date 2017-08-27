@@ -33,6 +33,15 @@ $(document).ready(function(){
             current_fs.hide();
         }
     }
+    else
+        {
+            current_fs = $(this).parent();
+            next_fs = $(this).parent().next();
+            $("#signup").eq($("fieldset").index(next_fs)).addClass("active");
+            next_fs.show();
+            current_fs.hide();
+        }
+   
 
     console.log("outside if");
     });

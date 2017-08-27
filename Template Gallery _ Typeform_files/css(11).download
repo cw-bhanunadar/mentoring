@@ -1,0 +1,48 @@
+/* latin-ext */
+@font-face {
+  font-family: 'Lekton';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Lekton'), local('Lekton-Regular'), url(https://fonts.gstatic.com/s/lekton/v7/8AKkQS1IQ0T_1VSlqD3lcfesZW2xOQ-xsNqO47m55DA.woff2) format('woff2');
+  unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Lekton';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Lekton'), local('Lekton-Regular'), url(https://fonts.gstatic.com/s/lekton/v7/GY6PlTlcpI9OWorXeq8Mhg.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Lekton';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Lekton-Bold'), url(https://fonts.gstatic.com/s/lekton/v7/V4Ico8nacLJqLG0ZylXRkhJtnKITppOI_IvcXXDNrsc.woff2) format('woff2');
+  unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Lekton';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Lekton-Bold'), url(https://fonts.gstatic.com/s/lekton/v7/sElR8eSezhQZgOuqD3W75VtXRa8TVwTICgirnJhmVJw.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Lekton';
+  font-style: italic;
+  font-weight: 400;
+  src: local('Lekton-Italic'), url(https://fonts.gstatic.com/s/lekton/v7/vu6LP-BEhcYbwwRXQ0EZaRTbgVql8nDJpwnrE27mub0.woff2) format('woff2');
+  unicode-range: U+0100-024F, U+1E00-1EFF, U+20A0-20AB, U+20AD-20CF, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Lekton';
+  font-style: italic;
+  font-weight: 400;
+  src: local('Lekton-Italic'), url(https://fonts.gstatic.com/s/lekton/v7/O218szq9vSZmH5dB2prhm_esZW2xOQ-xsNqO47m55DA.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215;
+}
