@@ -102,8 +102,8 @@
     box-shadow: 0 0 0 2px white, 0 0 0 3px #27AE60;
 }
 .radioButton p {
-    display: inline;
-    margin-left:2px;
+    display: inline-block;
+    margin-left:20px;
 }
 .flip-container {
     perspective: 1000px;
@@ -317,7 +317,7 @@
     text-align: center;
 }
 .radioButton{
-    display: inline;
+    width: 100%;
 }
 .footer{
     background-color: black;

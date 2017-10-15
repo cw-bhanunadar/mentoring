@@ -48,6 +48,7 @@ app.post("/s",function(req,res)
 /******Student Login***************/
 app.post("/l",function(req,res)
 {
+	
 	login={
 		'student_id':req.body.student_id,
 		'password':req.body.password
@@ -77,6 +78,7 @@ app.post("/l",function(req,res)
 /********mentor login**********/
 app.post("/lmen",function(req,res)
 {
+	
 	login={
 		'mentor_id':req.body.mentor_id,
 		'password':req.body.password
