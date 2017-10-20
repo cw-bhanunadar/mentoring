@@ -55,6 +55,7 @@ $(document).ready(function(){
 
     });
     $(".submit").click(function(){
+        if($(this).hasClass('third')){
         if(($(this).parent().children("#username").val().length===0)||($(this).parent().children("#pass1").val().length===0)){
             alert("Fields are empty");
             console.log("Inside empty");
@@ -70,6 +71,17 @@ $(document).ready(function(){
                 console.log("Inside exit");
                 window.location.href="/";
             }
+        }
+        else{
+            var check=  $("input:radio[name=radio-group1]:checked").val();
+            console.log(check);
+            check=  $("input:radio[name=radio-group2]:checked").val();
+            console.log(check);
+            check=  $("input:radio[name=radio-group3]:checked").val();
+            console.log(check);
+            check=  $("input:radio[name=radio-group4]:checked").val();
+            console.log(check);
+        }
 
     });
 

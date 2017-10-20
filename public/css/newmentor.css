@@ -1,0 +1,179 @@
+body {
+    
+      height: 100%;
+        background: #9b9b9b;
+        margin-left: auto;
+        margin-right: auto;
+	    padding-top: 5em;
+	    padding-right: 2em;
+        padding-left: 2em;
+        width: 100%;	
+        }
+	
+h1 { 
+    margin: 20px 0 10px 0;
+	    }
+h2 {
+    
+    margin: 10px 0 20px 0;
+	border-top: 1px solid #c1c1c1;
+	padding-top: 5px;
+        }	
+	
+.wrap {
+        height: 900px;
+        background: #fff;
+        margin-left: auto;
+        margin-right: auto;
+	    width: 100%;
+		padding: 10px 0 10px 20px;
+		-webkit-box-shadow: 1px 1px 3px rgba(0,0,0,.8);
+	    -moz-box-shadow: 1px 1px 3px rgba(0,0,0,.8);
+	    box-shadow: 1px 1px 3px rgba(0,0,0,.8);
+		}
+
+#teachergallery {
+        float: left;
+		font-family:  Helvetica, Arial, sans-serif;
+		background: #fff;
+		
+        }
+#teachergallery a {
+        font-weight: normal;
+        color: #5f5f5f;
+        text-decoration: none;
+        }
+#teachergallery a:hover {
+        color: #fff;
+        }
+		
+.headshot  {
+	background: #c0c0c0;
+	float: left;
+	border-left: 2px solid #69f;
+	margin: 0 0 10px 0;
+	padding: 0;
+	-webkit-box-shadow: 1px 1px 3px rgba(0,0,0,.8);
+	-moz-box-shadow: 1px 1px 3px rgba(0,0,0,.8);
+	box-shadow: 1px 1px 3px rbga(0,0,0,.8);
+	}
+.bio { 
+        width: 100%;
+        float: right; 
+        margin: 0 5px 0 0;
+        padding: 0 0 0 12px;
+	border-left: 1px solid #c1c1c1;
+        }
+.bio p {
+        margin: 0 0 1em 0;
+	}	
+.navi ul {
+        float: left;
+        width: 202px;
+	margin: 0;
+	padding: 0;
+        color: #5f5f5f;
+        text-decoration: none;
+	list-style: none;
+	
+	}
+.navi ul li {
+	display: block;
+	margin: 0;
+	padding: 0;
+	
+	}
+.navi ul li a {
+        display: block;
+	text-decoration: none;
+	margin: 0 0 5px 0;
+	padding: 12px 8px;
+	color: #5f5f5f;
+        background: #c1c1c1;
+	-webkit-box-shadow: 1px 1px 3px rgba(0,0,0,.8);
+	-moz-box-shadow: 1px 1px 3px rgba(0,0,0,.8);
+	box-shadow: 1px 1px 3px rbga(0,0,0,.8);
+	border-left: 2px solid #69f;
+	}	
+.navi ul li a:hover { 
+    background:  #69f;
+	color: #fff;
+	-webkit-box-shadow: 2px 1px 3px rgba(0,0,0,.8);
+	-moz-box-shadow: 2px 1px 3px rgba(0,0,0,.8);
+	box-shadow: 2px 1px 3px rgba(0,0,0,.8);
+	}
+.artwork ul {
+        float: left;
+        margin: 0;
+	padding: 0;
+        list-style: none;
+        }
+.artwork img {
+        float: left;
+        margin: 0;
+        border: 0;
+	background: #c0c0c0;
+	opacity :0.7;
+        filter :alpha(opacity=80);
+	}
+.artwork img:hover { 
+	opacity:1.0;
+        filter:alpha(opacity=100); 
+	}	
+.crop{
+	float: left;
+    position: relative;
+	width: 168px;
+	height: 140px;
+	border-left: 2px solid #69f;
+	background: #c0c0c0;
+	color: #000;
+	margin: 10px 8px 0 0;
+	-webkit-box-shadow: 1px 1px 3px rgba(0,0,0,.8);
+	-moz-box-shadow: 1px 1px 3px rgba(0,0,0,.8);
+	box-shadow: 1px 1px 3px rgba(0,0,0,.8);
+	}
+	.button{
+	padding-right:1000px;
+	}
+	.button input{
+	
+		float:right;
+		/*padding-left:200px;
+	*/	}
+.crop img{
+	margin:0;
+    background: #c0c0c0;
+	padding: 4px 4px;
+	position:absolute;
+	top:0px;
+	left:0px;
+	clip:rect(0px 195px 127px 0px);
+	}
+.mentee {
+float:right;
+}
+.mentee ul{
+list-style-type:none;
+}
+#scrollbarsContainer {
+  width: 500px;
+  height: 200px;
+  background: #eee;
+  padding:5px;
+  padding-left:200px;
+  overflow:auto;
+  font-family:arial;
+}
+/*div::scroolbars*/
+div::-webkit-scrollbar {
+    width: 8px;
+}
+div::-webkit-scrollbar-track {
+    background: #cccccc; 
+    border-radius: 5px;
+}
+div::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    background: gray;
+}
