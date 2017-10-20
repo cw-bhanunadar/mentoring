@@ -89,5 +89,8 @@ $(document).ready(function(){
         i++;
     }
 }, 5 * 1000);
-    
+
+   $(".logout").click(function(){
+    window.location.href="/";
+   });
 });
