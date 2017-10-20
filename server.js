@@ -3,6 +3,15 @@ const express = require('express');
 const bodyParser = require("body-parser");
 const path = require('path');
 
+//TO stop forward button to access website further
+app.use(function(req, res, next) {
+	    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+	        res.setHeader('Pragma', 'no-cache');
+		    res.setHeader('Expires', '0');
+		        next();
+
+});
+
 var app = express();
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(express.static("public"));
@@ -26,6 +35,13 @@ function regsuccess(res)
 	res.render("successfull_registration");
 }
 
+
+app.post("/ia",function(req,res)
+{
+	console.log("came here...");
+	console.log(req.body.radio_group1+" "+req.body.radio_group2+" "+req.body.radio_group3+" "+req.body.radio_group4+" "+
+		req.body.radio_group5+" "+req.body.radio_group6+" "+req.body.radio_group7+" "+req.body.radio_group8);
+});
 /*****Signup*************/
 app.post("/s",function(req,res)
 {
