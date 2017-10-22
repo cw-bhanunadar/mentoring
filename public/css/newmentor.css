@@ -154,10 +154,12 @@ h2 {
 float:right;
 margin-right:100px;
 }
+
 .mentee ul{
 list-style-type:none;
 }
 .mentee h1{
+	text-align: center;
 	font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
 }
 #scrollbarsContainer ul li a {
@@ -209,6 +211,11 @@ div::-webkit-scrollbar-thumb {
 
 .button{
 	float:left;
+}
+.mentee input[type="submit"]{
+	padding: 10px 15px;
+	background: #4479BA;
+	color: #FFF;
 }
 select#soflow,
 select#soflow-color {
