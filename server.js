@@ -6,10 +6,15 @@ const path = require('path');
 var app = express();
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(express.static("public"));
-//app.use(express.static(path.join("views")));
-//app.engine('html', engines.mustache);
 app.set("view engine","ejs");
 
+//TO stop forward button to access website further
+app.use(function(req, res, next) {
+	res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+	res.setHeader('Pragma', 'no-cache');
+	res.setHeader('Expires', '0');
+	next();
+});
 
 var conn = 'postgres://postgres:123456@localhost:5432/wt';
 var client = new pg.Client(conn);
@@ -25,6 +30,8 @@ function regsuccess(res)
 {
 	res.render("successfull_registration");
 }
+
+
 
 /*****Signup*************/
 app.post("/s",function(req,res)
@@ -52,26 +59,25 @@ app.post('/ia',function(req,res){
 /******Student Login***************/
 app.post("/l",function(req,res)
 {
-	
 	login={
 		'student_id':req.body.student_id,
 		'password':req.body.password
 	};
-	console.log(login['student_id']+" "+login['password']);
-	client.query('select name,password from student where student_id=$1',[login['student_id']],function(err,result)
+	client.query('select name,student_id from student where password=$1',[login['password']],function(err,result)
 	{
-		if(result===undefined)
+		console.log(result.rows[0].name + " " + result.rows[0].student_id);
+		if(result.length==0)
 		{
 			console.log(err);
 -			loginfailed(res);
 		}
 		else
 		{
-			console.log(result.rows[0].password);
-			if(login['password']==result.rows[0].password)
+			console.log(result.rows[0].name + " " + result.rows[0].student_id);
+			if(login['student_id']==result.rows[0].student_id)
 			{
 				var username = result.rows[0].name;
-    				res.render("website",{username:username});
+    			res.render("website",{username:username});
 			}
 			else
 				loginfailed(res);
@@ -87,18 +93,18 @@ app.post("/lmen",function(req,res)
 		'mentor_id':req.body.mentor_id,
 		'password':req.body.password
 	};
-	console.log(login['mentor_id']+" "+login['password']);
-	client.query('select name,password from mentor where mentor_id=$1',[login['mentor_id']],function(err,result)
+	client.query('select name,mentor_id from mentor where mentor_id=$1',[login['password']],function(err,result)
 	{
-		if(result===undefined)
+		console.log(result.rows[0].name + " " + result.rows[0].mentor_id);
+		if(result.length==0)
 		{
 			console.log(err);
 			loginfailed(res);
 		}
 		else
 		{
-			console.log(result.rows[0].password);
-			if(login['password']==result.rows[0].password)
+			console.log(result.rows[0].name + " " + result.rows[0].mentor_id);
+			if(login['mentor_id']==result.rows[0].mentor_id)
 			{
 				var username = result.rows[0].name;
     			res.render("mentor",{username:username});
