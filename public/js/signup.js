@@ -72,17 +72,6 @@ $(document).ready(function(){
                 window.location.href="/";
             }
         }
-        else{
-            var check=  $("input:radio[name=radio-group1]:checked").val();
-            console.log(check);
-            check=  $("input:radio[name=radio-group2]:checked").val();
-            console.log(check);
-            check=  $("input:radio[name=radio-group3]:checked").val();
-            console.log(check);
-            check=  $("input:radio[name=radio-group4]:checked").val();
-            console.log(check);
-        }
-
     });
 
     var quotes=["Every Great Achiever Inspired By a great Mentor",

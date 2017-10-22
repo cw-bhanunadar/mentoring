@@ -21,7 +21,7 @@
                                                     <div class="radioButton">
                                                                 
                                                                     <p>
-                                                                          <input type="radio" id="test1" name="radio-group1" value=1 >
+                                                                          <input type="radio" id="test1" name="radio-group1" value=1 checked>
                                                                           <label for="test1" >1</label>
                                                                     </p>
                                                                         <p>
@@ -51,7 +51,7 @@
                                                         <div class="radioButton">
                                                                         
                                                                 <p>
-                                                                        <input type="radio" id="test1" name="radio-group2" value=1 >
+                                                                        <input type="radio" id="test1" name="radio-group2" value=1 checked>
                                                                         <label for="test1" >1</label>
                                                                   </p>
                                                                       <p>
@@ -82,7 +82,7 @@
                                                         <div class="radioButton">
                                                                         
                                                                 <p>
-                                                                        <input type="radio" id="test1" name="radio-group3" value=1 >
+                                                                        <input type="radio" id="test1" name="radio-group3" value=1 checked>
                                                                         <label for="test1" >1</label>
                                                                   </p>
                                                                       <p>
@@ -112,7 +112,7 @@
                                                         <div class="radioButton">
                                                                         
                                                                 <p>
-                                                                        <input type="radio" id="test1" name="radio-group4" value=1 >
+                                                                        <input type="radio" id="test1" name="radio-group4" value=1 checked >
                                                                         <label for="test1" >1</label>
                                                                   </p>
                                                                       <p>
@@ -145,7 +145,7 @@
                                                  <div class="radioButton">
                                                                
                                                         <p>
-                                                                <input type="radio" id="test1" name="radio-group5" value=1 >
+                                                                <input type="radio" id="test1" name="radio-group5" value=1 checked>
                                                                 <label for="test1" >1</label>
                                                           </p>
                                                               <p>
@@ -177,7 +177,7 @@
                                                         <div class="radioButton">
                                                                         
                                                                 <p>
-                                                                        <input type="radio" id="test1" name="radio-group6" value=1>
+                                                                        <input type="radio" id="test1" name="radio-group6" value=1 checked>
                                                                         <label for="test1" >1</label>
                                                                   </p>
                                                                       <p>
@@ -208,7 +208,7 @@
                                                                 <div class="radioButton">
                                                                                 
                                                                         <p>
-                                                                                <input type="radio" id="test1" name="radio-group7" value=1>
+                                                                                <input type="radio" id="test1" name="radio-group7" value=1 checked>
                                                                                 <label for="test1" >1</label>
                                                                           </p>
                                                                               <p>
@@ -239,7 +239,7 @@
                                                         <div class="radioButton">
                                                                         
                                                                 <p>
-                                                                        <input type="radio" id="test1" name="radio-group8" value=1>
+                                                                        <input type="radio" id="test1" name="radio-group8" value=1 checked>
                                                                         <label for="test1" >1</label>
                                                                   </p>
                                                                       <p>
@@ -267,5 +267,14 @@
                 
                                             </div>
                                     </div>
+                                    <script type="text/javascript" >
+                                        $(".submit").click(function(){
+                                            for(var i=1;i<9;i++){
+                                                    console.log(i);
+                                            var check=  $("input:radio[name=radio-group"+i+"]:checked").val();
+                                            console.log(check);
+                                        }
+                                        });
+                                   </script>
             </body>
         </html>

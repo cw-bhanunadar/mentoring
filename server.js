@@ -45,11 +45,14 @@ app.post("/s",function(req,res)
 	regsuccess(res);
 });
 
+app.post('/ia',function(req,res){
+	console.log("in /ia");
+	console.log(req.body.avg);
+});
 /******Student Login***************/
 app.post("/l",function(req,res)
 {
-	var username="bhanu";
-	res.render("website",{username:username});
+	
 	login={
 		'student_id':req.body.student_id,
 		'password':req.body.password
@@ -79,8 +82,7 @@ app.post("/l",function(req,res)
 /********mentor login**********/
 app.post("/lmen",function(req,res)
 {
-	var username="bhanu";
-	res.render("mentor",{username:username});
+	
 	login={
 		'mentor_id':req.body.mentor_id,
 		'password':req.body.password
