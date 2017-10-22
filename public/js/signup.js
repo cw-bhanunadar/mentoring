@@ -91,7 +91,7 @@ $(document).ready(function(){
     }
 }, 5 * 1000);
 
-   $(".logout").click(function(){
+   $("#logout").click(function(){
     window.location.href="/";
    });
 });

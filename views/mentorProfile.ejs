@@ -4,8 +4,8 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <title>instructor mock 2</title>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 <link href="css/newmentor.css" rel="stylesheet" media="all">
 </head>
@@ -37,20 +37,33 @@ Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac tu
 <div class="mentee">
 	<h1>Mentees Under You</h1>
 	<div id="scrollbarsContainer">
-	<ul>
-  <li><a href="">Test</a></li>
-  <li><a href="">Test</a></li>
-  <li><a href="">Test</a></li>
-  <li><a href="">Test</a></li>
-  <li><a href="">Test</a></li>
-  <li><a href="">Test</a></li>
-  <li><a href="">Test</a></li>
-  <li><a href="">Test</a></li>
-  <li><a href="">Test</a></li>
-  <li><a href="">Test</a></li>
-  </ul>
+      <ul>
+          <li><a href="">Test</a></li>
+          <li><a href="">Test</a></li>
+          <li><a href="">Test</a></li>
+          <li><a href="">Test</a></li>
+          <li><a href="">Test</a></li>
+          <li><a href="">Test</a></li>
+          <li><a href="">Test</a></li>
+          <li><a href="">Test</a></li>
+          <li><a href="">Test</a></li>
+          <li><a href="">Test</a></li>
+      </ul>
 </div>
 </div>
+
+<form class="mentee">
+    <h1>Add Mentees in List</h1>
+    <div id="scrollbarsContainer">
+      <select name="student_id">
+        <%for(var i=0;i<8;i++){%>
+        <option value="<%=7655+i%>"><%=7655+i%></option>
+        <%}%>
+      </select>
+  </div>
+  <input type="submit" name="submit" value="submit">
+</form>
+  
  <div class="button">                               
            <input type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal" value="Send A notice to Mentees">                               
     </div>
@@ -58,27 +71,26 @@ Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac tu
 </div>
 
 
-
+  
 
 <div class="modal fade" id="myModal" role="dialog">
-                        <div class="modal-dialog ">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <button type="button" class="close" data-dismiss="modal">&times;</button>
-                          <h4 class="modal-title">Send a notice </h4>
-                        </div>
-                        <div class="modal-body">
-                          <input class="form-control" type="text" placeholder="rollnumber">
-                          <br>
-                          <textarea class="form-control" style="min-width: 100%" placeholder="message"></textarea> </textarea>
-                        </div>
-                        <div class="modal-footer">
-                            <input type="submit" value="Send" id="submit" name="submit" class="btn btn-primary">
-                          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-
-                        </div>
-                      </div>
-                        </div>
-                   </div> 
+   <div class="modal-dialog ">
+      <div class="modal-content">
+         <div class="modal-header">
+             <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Send a notice </h4>
+          </div>
+          <div class="modal-body">
+            <input class="form-control" type="text" placeholder="rollnumber">
+              <br>
+                <textarea class="form-control" style="min-width: 100%" placeholder="message"></textarea> </textarea>
+          </div>
+          <div class="modal-footer">
+            <input type="submit" value="Send" id="submit" name="submit" class="btn btn-primary">
+              <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+      </div>
+      </div>
+    </div> 
 </body>
 </html>

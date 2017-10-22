@@ -8,13 +8,13 @@
         <link href="css/bootstrap.css" rel="stylesheet" media="all">
     </head>
     <%var q = ["How satisfied are you with the value of course content within your major?",
-        		   "How satisfied are you with the online access to required services provided by the campus?",
-        		   "How satisfied are you with the quality of instruction you receive in your classes?",
-        		   "How satisfied are you with the use of technology and media in the classroom by faculty?",
-        		   "How satisfied are you with the availability of faculty to student outside of class?",
-        		   "How satisfied are you with the provision of timely academic feedback by faculty?",
-        		   "How satisfied are you with how fair and unbaised faculty are in their treatment os students?",
-        		   "How satisfied are you with the availability of faculty to student outside of class?"]%>
+            "How satisfied are you with the online access to required services provided by the campus?",
+            "How satisfied are you with the quality of instruction you receive in your classes?",
+            "How satisfied are you with the use of technology and media in the classroom by faculty?",
+            "How satisfied are you with the availability of faculty to student outside of class?",
+            "How satisfied are you with the provision of timely academic feedback by faculty?",
+            "How satisfied are you with how fair and unbaised faculty are in their treatment os students?",
+            "How satisfied are you with the availability of faculty to student outside of class?"]%>
     <body>
     	 <div class="Main-page">
             <h1>Question</h1>
@@ -58,22 +58,22 @@
              	</fieldset>
              	<% } %>
         	</div>
-          <script type="text/javascript">
+        <script type="text/javascript">
             var avg = 0;
             $(".submit").click(function(){
                 for(var i=1;i<9;i++){
                 var check=  $("input:radio[name=radio-group"+i+"]:checked").val();
                 avg += +check;
             }
-                avg = avg / (i-1);
-                console.log(avg);
-                alert("Survey submitted\n");
-                $.post('/ia',{avg:avg},function(avg){
-                        alert("Survey submitted\n");
-                   }
-                );
+            avg = avg / (i-1);
+            console.log(avg);
+            alert("Survey submitted\n");
+            $.post('/q',{avg:avg},function(){
+                    window.location.href="/";
+                }
+            );
             });        
-          </script>
+        </script>
         </div>
     </body>
 </html>

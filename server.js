@@ -21,18 +21,17 @@ var client = new pg.Client(conn);
 if(client.connect()) console.log('Successfully Connected..');
 else console.log('Connection Unsuccessful..');
 
-function loginfailed(res)
-{
-	res.render("failedlogin");
-}
-
-function regsuccess(res)
-{
-	res.render("successfull_registration");
-}
-
+app.post('/q',function(req,res){
+	console.log(req.body.avg);
+});
 app.get('/instructionaffectiveness',function(req,res){
 	res.render("instructionaffectiveness");
+});
+app.get('/campusservice',function(req,res){
+	res.render("campusservice");
+});
+app.get("/ment",function(req,res){
+	res.render("ment");
 });
 /*****Signup*************/
 app.post("/s",function(req,res)
@@ -50,16 +49,12 @@ app.post("/s",function(req,res)
 		values:[s['student_id'],s['name'],s['email'],s['branch'],s['rollno'],s['password']]
 	});
 	console.log(s['student_id']+" "+s['name']+" "+s['email']+" "+s['branch']+" "+s['rollno']+" "+s['password']);
-	regsuccess(res);
-});
-
-app.post('/ia',function(req,res){
-	console.log("in /ia");
-	console.log(req.body.avg);
+	res.render("successfull_registration");
 });
 /******Student Login***************/
 app.post("/l",function(req,res)
 {
+	
 	login={
 		'student_id':req.body.student_id,
 		'password':req.body.password
@@ -70,7 +65,7 @@ app.post("/l",function(req,res)
 		if(result.length==0)
 		{
 			console.log(err);
--			loginfailed(res);
+-			res.render("failedlogin");
 		}
 		else
 		{
@@ -81,7 +76,7 @@ app.post("/l",function(req,res)
     			res.render("website",{username:username});
 			}
 			else
-				loginfailed(res);
+				res.render("failedlogin");
 		}
 	});
 });
@@ -100,7 +95,7 @@ app.post("/lmen",function(req,res)
 		if(result.length==0)
 		{
 			console.log(err);
-			loginfailed(res);
+			res.render("failedlogin");
 		}
 		else
 		{
@@ -111,7 +106,7 @@ app.post("/lmen",function(req,res)
     			res.render("mentor",{username:username});
 			}
 			else
-				loginfailed(res);
+				res.render("failedlogin");		
 		}
 	});
 });
