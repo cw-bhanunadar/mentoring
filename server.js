@@ -31,8 +31,9 @@ function regsuccess(res)
 	res.render("successfull_registration");
 }
 
-
-
+app.get('/instructionaffectiveness',function(req,res){
+	res.render("instructionaffectiveness");
+});
 /*****Signup*************/
 app.post("/s",function(req,res)
 {
