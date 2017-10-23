@@ -54,12 +54,12 @@ app.post("/s",function(req,res)
 /******Student Login***************/
 app.post("/l",function(req,res)
 {
-	// var username="Bhanu Nadar";
-	// var email="bhanu.nadar@gmail.com";
-	// var rollno="7653";
-	// var branch="comps";
-	// var contact="7208755685";
-	//res.render("website",{username:username,email:email,rollno:rollno,branch:branch,contact:contact});
+	var username="Bhanu Nadar";
+	var email="bhanu.nadar@gmail.com";
+	var rollno="7653";
+	var branch="comps";
+	var contact="7208755685";
+	res.render("website",{username:username,email:email,rollno:rollno,branch:branch,contact:contact});
 	login={
 		'student_id':req.body.student_id,
 		'password':req.body.password

@@ -28,6 +28,7 @@
 													<i class="glyphicon glyphicon-book"></i><a>personal info</a>
 													<br />
 													<i class="glyphicon glyphicon-phone"></i><%=contact%></p>
+													<input type="button" class="btn btn-info btn-sm inbox" data-toggle="modal" data-target="#myModal" value="Inbox">
 											</div>
 										</div>
 									</div>
@@ -38,14 +39,33 @@
                 
                 	<div id="text_slide">
 					</div>
+					
 					<div id=logout>
-						<button type="button" class="btn btn-default btn-sm">
-								<span class="glyphicon glyphicon-log-out logout"></span> Log out
-						</button>
+							
+							<button type="button" class="btn btn-default btn-sm">
+							<span class="glyphicon glyphicon-log-out logout"></span> Log out
+							</button>
 					</div>
                 
 			</div>
-			
+			<!-- Modal for inbox -->
+			<div class="modal fade" id="myModal" role="dialog">
+				<div class="modal-dialog ">
+				   <div class="modal-content">
+					  <div class="modal-header">
+						  <button type="button" class="close" data-dismiss="modal">&times;</button>
+							 <h4 class="modal-title">Inbox</h4>
+					   </div>
+					   <div class="modal-body">
+						 <p>No messages <!-- Fetch the msg sent by menttee here if he has unread message else print no message--><p>
+					   </div>
+					   <div class="modal-footer">
+						 <input type="submit" value="Send" id="submit" name="submit" class="btn btn-primary">
+						   <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+					   </div>
+				   </div>
+				</div>
+			</div>
             <div id="content">
                    <h1>Why Mentors?</h1>
                    <br>
@@ -184,5 +204,6 @@
 				</div>
 			</div>
 		</div>
+		
     </body>
 </html>
