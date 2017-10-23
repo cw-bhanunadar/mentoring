@@ -1,5 +1,5 @@
 <DOCTYPE html>
-    <html>
+	<html>
         <head>
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
 			<link href="css/website.css" rel="stylesheet" media="all">
@@ -12,16 +12,37 @@
         </head>
         <body>
             <div class="upper">
-                <div class="Header">
-                    <h1>Welcome <%= username %> </h1>
-                </div>
-                <div id="text_slide">
-				</div>
-				<div id=logout>
+					<div class="info">
+							<div>
+								<div class="col-xs-12 col-sm-6 col-md-3">
+									<div class="well well-sm">
+										<div class="row">
+							
+											<div class="col-sm-6 col-md-8">
+												<h4><%= username%></h4>
+												<small><cite title="7653,Comps"><%=rollno%>, <%=branch%> <i class="glyphicon glyphicon-bookmark">
+												</i></cite></small>
+												<p>
+													<i class="glyphicon glyphicon-envelope"></i><%=email%>
+													<br />
+													<i class="glyphicon glyphicon-book"></i><a>personal info</a>
+													<br />
+													<i class="glyphicon glyphicon-phone"></i><%=contact%></p>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						
+                
+                	<div id="text_slide">
+					</div>
+					<div id=logout>
 						<button type="button" class="btn btn-default btn-sm">
 								<span class="glyphicon glyphicon-log-out logout"></span> Log out
-							  </button>
-				</div>
+						</button>
+					</div>
                 
 			</div>
 			
@@ -48,7 +69,7 @@
 			<div class="clearfix"> </div>
 		</div>
 	
-		<div class="ourTeam">
+		<!-- <div class="ourTeam">
 				<div class="team-heading">
 						<h1>Meet Our Team</h1>
 					</div>
@@ -132,14 +153,14 @@
 										</div>
 									</div>
 								</div>
-		</div>
+		</div> -->
 		<div class="footer">
 			<div class="Location">
 			<div class="col-md-6 ">
 				<h3>Our Location</h3>
 				<p>father Agnel bandra Bandstand<br>
-				7208755685/80856962<br>
-			bhanu.nadar@gmail.com </p>
+					7208755685/80856962<br>
+					frcrce@gmail.com </p>
 			<p>Copyright  © 2017 Bhanu Inc. All Rights Reserved. Made with <i class="fa fa-heart pulse"></i> by ME</p>
 			</div>
 			</div>
