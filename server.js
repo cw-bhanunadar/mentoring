@@ -21,6 +21,9 @@ var client = new pg.Client(conn);
 if(client.connect()) console.log('Successfully Connected..');
 else console.log('Connection Unsuccessful..');
 
+
+
+/**********Questionnaires************/
 app.post('/q',function(req,res){
 	console.log(req.body.avg);
 });
@@ -30,55 +33,48 @@ app.get('/instructionaffectiveness',function(req,res){
 app.get('/campusservice',function(req,res){
 	res.render("campusservice");
 });
-app.get("/ment",function(req,res){
-	res.render("ment");
-});
+
 /*****Signup*************/
-app.post("/s",function(req,res)
-{
+app.post("/s",function(req,res){
 	s = {
 		'student_id':req.body.student_id,
 		'name':req.body.name,
 		'email':req.body.email,
 		'branch':req.body.branch,
 		'rollno':req.body.rollno,
+		'contact':req.body.contact,
 		'password':req.body.password
 	};
 	client.query({
-		text:'insert into student (student_id,name,email,branch,rollno,password) values ($1,$2,$3,$4,$5,$6)',
-		values:[s['student_id'],s['name'],s['email'],s['branch'],s['rollno'],s['password']]
+		text:'insert into student (student_id,name,email,branch,rollno,contact,password) values ($1,$2,$3,$4,$5,$6,$7)',
+		values:[s['student_id'],s['name'],s['email'],s['branch'],s['rollno'],s['contact'],s['password']]
 	});
-	console.log(s['student_id']+" "+s['name']+" "+s['email']+" "+s['branch']+" "+s['rollno']+" "+s['password']);
+	console.log(s['student_id']+" "+s['name']+" "+s['email']+" "+s['branch']+" "+s['rollno']+" "+s['contact']+" "+s['password']);
 	res.render("successfull_registration");
 });
+
+/********Send And Receive Messages*************/
+app.post('/sm',function(req,res){
+	client.query('update msg set msg=$1 where student_id=$2',[req.body.msg,req.body.rollno],function(err,result){
+		console.log("sent message " + req.body.msg + "to " + req.body.rollno);
+	});
+});
+
+
+
+
 /******Student Login***************/
-app.post("/l",function(req,res)
-{
-	var username="Bhanu Nadar";
-	var email="bhanu.nadar@gmail.com";
-	var rollno="7653";
-	var branch="comps";
-	var contact="7208755685";
-	res.render("website",{username:username,email:email,rollno:rollno,branch:branch,contact:contact});
-	login={
-		'student_id':req.body.student_id,
-		'password':req.body.password
-	};
-	client.query('select name,student_id from student where password=$1',[login['password']],function(err,result)
-	{
-		console.log(result.rows[0].name + " " + result.rows[0].student_id);
-		if(result.length==0)
-		{
-			console.log(err);
--			res.render("failedlogin");
-		}
-		else
-		{
-			console.log(result.rows[0].name + " " + result.rows[0].student_id);
-			if(login['student_id']==result.rows[0].student_id)
+app.post("/l",function(req,res){
+	client.query('select * from student where password=$1',[req.body.password],function(err,result){
+		var data = result.rows[0];
+		if(result.rows.length==0)
+			res.render("failedlogin");
+		else{
+			if(req.body.student_id==data.student_id)
 			{
-				var username = result.rows[0].name;
-    			res.render("website",{username:username});
+				client.query('select msg from msg where student_id=$1',[req.body.student_id],function(err,result){
+					res.render("website",{data:data,msg:result.rows[0].msg});
+				});
 			}
 			else
 				res.render("failedlogin");
@@ -87,32 +83,31 @@ app.post("/l",function(req,res)
 });
 
 /********mentor login**********/
-app.post("/lmen",function(req,res)
-{
-	
-	login={
-		'mentor_id':req.body.mentor_id,
-		'password':req.body.password
-	};
-	client.query('select name,mentor_id from mentor where mentor_id=$1',[login['password']],function(err,result)
-	{
-		console.log(result.rows[0].name + " " + result.rows[0].mentor_id);
-		if(result.length==0)
-		{
-			console.log(err);
+app.post("/lmen",function(req,res){
+	client.query('select * from mentor where password=$1',[req.body.password],function(err,result){
+		var data = result.rows[0];
+		if(result.rows.length==0)
 			res.render("failedlogin");
-		}
-		else
-		{
-			console.log(result.rows[0].name + " " + result.rows[0].mentor_id);
-			if(login['mentor_id']==result.rows[0].mentor_id)
-			{
-				var username = result.rows[0].name;
-    			res.render("mentor",{username:username});
+		else{
+			if(req.body.mentor_id==data.mentor_id){
+				client.query('select student_id from student where mentor_id is null',function(err1,result1){
+					client.query('select student_id from student where mentor_id=$1',[req.body.mentor_id],function(err2,result2){
+						res.render("mentor",{data:data,result1:result1,result2:result2});
+					});
+				});
 			}
 			else
-				res.render("failedlogin");		
+				res.render("failedlogin");
 		}
+	});
+});
+
+
+/****************Add Mentee****************/
+app.post('/am',function(req,res){
+	console.log(req.body.mentor_id,req.body.student_id);
+	client.query('update student set mentor_id=$1 where student_id=$2',[req.body.mentor_id,req.body.student_id],function(req,result){
+		res.redirect("/ml");
 	});
 });
 
@@ -129,11 +124,8 @@ app.get("/forgot",function(req,res){
     res.render("forgot");
 });
 
-app.get("/mentorLogin",function(req,res){
+app.get("/ml",function(req,res){
     res.render("mentorLogin");
-});
-app.get("/mP",function(req,res){
-	res.render("mentorProfile");
 });
 app.listen(3000,function(){
     console.log("Server started");

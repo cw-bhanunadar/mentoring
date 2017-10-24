@@ -7,39 +7,37 @@
              <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 			<script src="js/signup.js"></script>
 			<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+			<script src="https://cdn.rawgit.com/mgalante/jquery.redirect/master/jquery.redirect.js"></script>
 			<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
             <link href="css/bootstrap.css" rel="stylesheet" media="all">
         </head>
         <body>
             <div class="upper">
 					<div class="info">
-							<div>
-								<div class="col-xs-12 col-sm-6 col-md-3">
-									<div class="well well-sm">
-										<div class="row">
-							
-											<div class="col-sm-6 col-md-8">
-												<h4><%= username%></h4>
-												<small><cite title="7653,Comps"><%=rollno%>, <%=branch%> <i class="glyphicon glyphicon-bookmark">
-												</i></cite></small>
-												<p>
-													<i class="glyphicon glyphicon-envelope"></i><%=email%>
-													<br />
-													<i class="glyphicon glyphicon-book"></i><a>personal info</a>
-													<br />
-													<i class="glyphicon glyphicon-phone"></i><%=contact%></p>
-													<input type="button" class="btn btn-info btn-sm inbox" data-toggle="modal" data-target="#myModal" value="Inbox">
-											</div>
+						<div>
+							<div class="col-xs-12 col-sm-6 col-md-3">
+								<div class="well well-sm">
+									<div class="row">
+						
+										<div class="col-sm-6 col-md-8">
+											<h4><%=data.name%></h4>
+											<small><cite title="XXXX,XXXXX"><%=data.rollno%>, <%=data.branch%> <i class="glyphicon glyphicon-bookmark">
+											</i></cite></small>
+											<p>
+												<i class="glyphicon glyphicon-envelope"></i><%=data.email%>
+												<br />
+												<i class="glyphicon glyphicon-book"></i><a>personal info</a>
+												<br />
+												<i class="glyphicon glyphicon-phone"></i><%=data.contact%></p>
+												<input type="button" class="btn btn-info btn-sm inbox" data-toggle="modal" data-target="#myModal" value="Inbox">
 										</div>
 									</div>
 								</div>
 							</div>
 						</div>
-						
-                
+					</div>
                 	<div id="text_slide">
 					</div>
-					
 					<div id=logout>
 							
 							<button type="button" class="btn btn-default btn-sm">
@@ -57,7 +55,7 @@
 							 <h4 class="modal-title">Inbox</h4>
 					   </div>
 					   <div class="modal-body">
-						 <p>No messages <!-- Fetch the msg sent by menttee here if he has unread message else print no message--><p>
+						 <p><%=JSON.stringify(msg)%><p>
 					   </div>
 					   <div class="modal-footer">
 						 <input type="submit" value="Send" id="submit" name="submit" class="btn btn-primary">
@@ -88,92 +86,6 @@
 			</div>
 			<div class="clearfix"> </div>
 		</div>
-	
-		<!-- <div class="ourTeam">
-				<div class="team-heading">
-						<h1>Meet Our Team</h1>
-					</div>
-				<div class="col-sm-3 team-grid">
-						<div class="flip-container">
-							<div class="flipper">
-								<div class="front">
-									<img src="img/bhanu.jpg" alt="" />
-								</div>
-								<div class="back">
-									<h4>Bhanu Nadar</h4>
-									<p>WT</p>
-									<div class="w3l-social">
-										<ul>
-											<li><a href="#"><i class="fa fa-facebook"></i></a></li>
-											<li><a href="#"><i class="fa fa-twitter"></i></a></li>
-											<li><a href="#"><i class="fa fa-rss"></i></a></li>
-										</ul>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div class="col-sm-3 team-grid">
-							<div class="flip-container">
-								<div class="flipper">
-									<div class="front">
-										<img src="img/kevin.jpg" alt="" />
-									</div>
-									<div class="back">
-										<h4>Kevin Sunny</h4>
-										<p>SOOAD</p>
-										<div class="w3l-social">
-											<ul>
-												<li><a href="#"><i class="fa fa-facebook"></i></a></li>
-												<li><a href="#"><i class="fa fa-twitter"></i></a></li>
-												<li><a href="#"><i class="fa fa-rss"></i></a></li>
-											</ul>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="col-sm-3 team-grid">
-								<div class="flip-container">
-									<div class="flipper">
-										<div class="front">
-											<img src="img/bhanu.jpg" alt="" />
-										</div>
-										<div class="back">
-											<h4>Bhanu Nadar</h4>
-											<p>Codelabs</p>
-											<div class="w3l-social">
-												<ul>
-													<li><a href="#"><i class="fa fa-facebook"></i></a></li>
-													<li><a href="#"><i class="fa fa-twitter"></i></a></li>
-													<li><a href="#"><i class="fa fa-rss"></i></a></li>
-												</ul>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="col-sm-3 team-grid">
-									<div class="flip-container">
-										<div class="flipper">
-											<div class="front">
-												<img src="img/sundar.jpg" alt="" />
-											</div>
-											<div class="back">
-												<h4>Sundar Pichai</h4>
-												<p>Bhai hai apna</p>
-												<div class="w3l-social">
-													<ul>
-														<li><a href="#"><i class="fa fa-facebook"></i></a></li>
-														<li><a href="#"><i class="fa fa-twitter"></i></a></li>
-														<li><a href="#"><i class="fa fa-rss"></i></a></li>
-													</ul>
-												</div>
-											</div>
-										</div>
-									</div>
-								</div>
-		</div> -->
 		<div class="footer">
 			<div class="Location">
 			<div class="col-md-6 ">
@@ -203,7 +115,6 @@
 				</ul>
 				</div>
 			</div>
-		</div>
-		
+		</div>	
     </body>
 </html>

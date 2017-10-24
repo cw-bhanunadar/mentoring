@@ -9,14 +9,14 @@
         <script src="js/signup.js"></script>
         <link href="css/bootstrap.css" rel="stylesheet" media="all">
     </head>
-    <%var q = ["How satisfied are you with the value of course content within your major?",
-            "How satisfied are you with the online access to required services provided by the campus?",
-            "How satisfied are you with the quality of instruction you receive in your classes?",
-            "How satisfied are you with the use of technology and media in the classroom by faculty?",
-            "How satisfied are you with the availability of faculty to student outside of class?",
-            "How satisfied are you with the provision of timely academic feedback by faculty?",
-            "How satisfied are you with how fair and unbaised faculty are in their treatment os students?",
-            "How satisfied are you with the availability of faculty to student outside of class?"]%>
+    <%var q = [ "How satisfied are you with the value of course content within your major?",
+                "How satisfied are you with the online access to required services provided by the campus?",
+                "How satisfied are you with the quality of instruction you receive in your classes?",
+                "How satisfied are you with the use of technology and media in the classroom by faculty?",
+                "How satisfied are you with the availability of faculty to student outside of class?",
+                "How satisfied are you with the provision of timely academic feedback by faculty?",
+                "How satisfied are you with how fair and unbaised faculty are in their treatment os students?",
+                "How satisfied are you with the availability of faculty to student outside of class?"]%>
     <body>
     	 <div class="Main-page">
             <h1>Question</h1>
@@ -29,23 +29,23 @@
                    <div class="radioButton">   
                            
           			      <p>	
-                          <input type="radio" id="test1" name="radio-group<%=i%>" value=1 checked>
+                          <input type="radio" id="test1" name="radio_group<%=i%>" value=1 checked>
                           <label for="test1" >1</label>
                     	</p>
                       <p>
-                          <input type="radio" id="test2" name="radio-group<%=i%>" value=2>
+                          <input type="radio" id="test2" name="radio_group<%=i%>" value=2>
                           <label for="test1">2</label>
                       </p>
                       <p>
-                          <input type="radio" id="test3" name="radio-group<%=i%>" value=3>
+                          <input type="radio" id="test3" name="radio_group<%=i%>" value=3>
                           <label for="test1" >3</label>
                       </p>
                       <p>
-                         <input type="radio" id="test1" name="radio-group<%=i%>" value=4>
+                         <input type="radio" id="test1" name="radio_group<%=i%>" value=4>
                          <label for="test1" >4</label>
                       </p>
                       <p>
-                         <input type="radio" id="test1" name="radio-group<%=i%>" value=5 >
+                         <input type="radio" id="test1" name="radio_group<%=i%>" value=5 >
                          <label for="test1">5</label>
                       </p>
                     </div>
@@ -64,29 +64,28 @@
                 <button type="button" class="btn btn-lg btn-primary goBack">Go To Profile</button>
             </div>
         <script type="text/javascript">
-            var avg = 0;
-            $(".submit").click(function(){
-                for(var i=1;i<9;i++){
-                var check=  $("input:radio[name=radio-group"+i+"]:checked").val();
-                avg += +check;
+          var avg = 0;
+          $(".submit").click(function(){
+            for(var i=1;i<9;i++){
+              var check=  $("input:radio[name=radio_group"+i+"]:checked").val();
+              avg += +check;
             }
             avg = avg / (i-1);
             console.log(avg);
             alert("Survey submitted\n");
             $.post('/q',{avg:avg},function(){
-                    window.location.href="/";
-                }
-            );
-            }); 
-            // to do post request for go back
-        $(".goBack").click(function(){
-            var form = $('<form></form>');
-            form.attr("method", "post");
-            form.attr("action", "/l");
-            $(document.body).append(form);
-            form.submit();
-        });     
+              window.location.href="/";
+            });
+          });
+          // to do post request for go back
+          $(".goBack").click(function(){
+              var form = $('<form></form>');
+              form.attr("method", "post");
+              form.attr("action", "/l");
+              $(document.body).append(form);
+              form.submit();
+          });     
         </script>
-        </div>
+      </div>
     </body>
 </html>

@@ -1,83 +1,101 @@
-<DOCTYPE html>
-    <html>
-        <head>
-            <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-            <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-            <link href="css/website.css" rel="stylesheet" media="all">
-            <link href="css/bootstrap.css" rel="stylesheet" media="all">
-            <script src="js/forgot.js"></script>
-        </head>
-        <body>
 
-                <div id="container">                           
-                        <div class="sidebar">                             
-                          <div class="image">  
-                            <img src="https://scontent-atl3-1.xx.fbcdn.net/v/t1.0-1/c0.0.160.160/p160x160/13925229_10205028027660516_4595319040701208597_n.jpg?oh=b61eb45bb5fa0a7572f3e9800a459e64&oe=58476EC7"/>                               
-                          </div>
-                          <div class="bio">                                
-                            <h2><%= username %></h2>                               
-                            <p>Network Programming Lab, Software Architecture, Software Engineering, Object Oriented Software Engineering, Object Oriented Programming Methodology, NTAL, Placement Computer Department, NATL, Web Technology Lab, Web Technology, MSC-IT Mobile Computing and Programming with Components</p>                               
-                          </div>                             
-                          <div class="links">                               
-                            <ul>                                 
-                              <li>    
-                                <a href="http://gyan.fragnel.edu.in:2222/moodle/">Moddle</a>                                 
-                              </li>                                
-                              <li>                         
-                                <a href="https://gmail.com">Email</a>                                    
-                              </li>
-                              <li>
-                                <a href="https://devops.com/">DevOps</a>
-                              </li>                                 
-                              <li>                         
-                                <a href="#"></a>                                   
-                              </li>                          
-                            </ul>                          
-                          </div>                             
-                          <div class="button">                               
-                              <input type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal" value="Send A notice to Mentees">                               
-                          </div>                    
-                        </div>
-                                                
-                        <div class="post-container">                             
-                          <div class="post">                               
-                            <img src="https://scontent-atl3-1.xx.fbcdn.net/v/t1.0-0/c0.45.206.206/p206x206/13631451_1626842660967489_4051031015401882285_n.jpg?oh=2c3d708fc3341c1b83eb26f63608a2eb&oe=58701F7D">                               
-                            
-                            <p>
-                              
-                            </p>       
-                          </div>
-                          <div class="post-container">                             
-                              <div class="post">
-                              </div>
-                          </div>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Mentor Website</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="https://cdn.rawgit.com/mgalante/jquery.redirect/master/jquery.redirect.js"></script>
+<link href="css/newmentor.css" rel="stylesheet" media="all">
+</head>
 
-                      
-                        </div>
-                        
-                        
-                      </div>
-                      <div class="modal fade" id="myModal" role="dialog">
-                        <div class="modal-dialog ">
-                      <div class="modal-content">
-                        <div class="modal-header">
-                          <button type="button" class="close" data-dismiss="modal">&times;</button>
-                          <h4 class="modal-title">Send a notice </h4>
-                        </div>
-                        <div class="modal-body">
-                
-                          <textarea class="form-control" style="min-width: 100%"></textarea> </textarea>
-                        </div>
-                        <div class="modal-footer">
-                            <input type="submit" value="Send" id="submit" name="submit" class="btn btn-primary">
-                          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+<body>
+<div class="wrap">
+<div id="teachergallery">
 
-                        </div>
-                      </div>
-                        </div>
-                   </div> 
-                   
-                      
-        </body>
-    </html>
+<h1><%=data.name%></h1>
+<h1><%=data.qual%></h1>
+<h2>Assistant Professor</h2> 
+
+
+<div class="bio">
+<p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.<br>
+
+Network Programming Lab, Software Architecture, Software Engineering, Object Oriented Software Engineering, Object Oriented Programming Methodology, NTAL, Placement Computer Department, NATL, Web Technology Lab, Web Technology, MSC-IT Mobile Computing and Programming with Components<br>
+
+Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. </p>
+</div>
+<div class="navi">
+  <ul>
+        <li id="n-classes"><a target="_blank" href="">classes</a></li>
+        <li id="n-program"><a target="_blank" href="http://gyan.fragnel.edu.in:2222/moodle/course/index.php?categoryid=38">program</a></li>
+        <li id="n-ml"><a target="_blank" href="">materials lists</a></li>
+        <li id="n-co"><a target="_blank" href="http://gyan.fragnel.edu.in:2222/moodle/login/index.php">course outlines</a></li>
+        <li id="n-website"><a target="_blank" href="http://gyan.fragnel.edu.in:2222/moodle/course/view.php?id=295">instructor's website</a></li>
+</ul>
+</div>
+
+<%console.log("result1" + JSON.stringify(result1.rows))%>
+<%console.log("result2" + JSON.stringify(result2.rows))%>
+<div class="mentee">
+	<h1>Mentees Under You</h1>
+	<div id="scrollbarsContainer">
+      <ul>
+          <%for(var i in result2.rows) { %>
+          <li><a href=""><%=result2['rows'][i]['student_id']%></a></li>
+          <% } %>
+      </ul>
+</div>
+</div>
+
+<form class="mentee" action='/am' method="post">
+    <h1>Add Mentees in List</h1>
+    <input type="hidden" name="mentor_id" value="<%=data.mentor_id%>">
+      <select name="student_id" id="soflow">
+        <%for(var i in result1.rows){%>
+        <option value= "<%=result1['rows'][i]['student_id']%>" > <%=result1['rows'][i]['student_id']%> </option>
+        <%}%>
+      </select>
+      <input type="submit" name="submit" value="Add">
+</form>
+  
+ <div class="button">                               
+   <input type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal" value="Send A notice to Mentees">                               
+    </div>
+</div>
+
+<div class="modal fade" id="myModal" role="dialog">
+   <div class="modal-dialog ">
+      <div class="modal-content">
+         <div class="modal-header">
+             <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Send a notice </h4>
+          </div>
+          <div class="modal-body">
+            <input class="form-control" id="rollno" name="rollno" type="text" placeholder="rollnumber">
+              <br>
+                <textarea class="form-control" id="msg" name="msg" style="min-width: 100%" placeholder="message"></textarea>
+          </div>
+          <div class="modal-footer">
+            <input type="submit" value="Send" id="submit" name="submit" class="btn btn-primary">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <script type="text/javascript">
+              $("#submit").click(function(){
+                var rollno = $("#rollno").val();
+                var msg = $("#msg").val();
+                var mentor_id = <%-JSON.stringify(data.mentor_id)%>
+                var password = <%-JSON.stringify(data.password)%>
+                console.log(rollno+" "+msg)
+                $.post('/sm',{rollno:rollno,msg:msg},function(){
+                  console.log("message sent..");
+                  $.redirect('/lmen',{mentor_id:mentor_id,password:password});
+                });
+              });
+            </script>
+          </div>
+      </div>
+      </div>
+    </div> 
+</body>
+</html>
