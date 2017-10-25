@@ -59,22 +59,33 @@ app.post('/sm',function(req,res){
 		console.log("sent message " + req.body.msg + "to " + req.body.rollno);
 	});
 });
+/*************Edit Profile **********/
+app.post("/e",function(req,res){
+	console.log(req.body.name,req.body.password,req.body.email,req.body.roll);
+	client.query({
+		text:'update student set name=$1,password=$2,email=$3 where student_id=$4 values ($1,$2,$3,$4)',
+		values:[req.body.name,req.body.password,req.body.email,req.body.roll]
+	},function(err,result){
+		
+	});
+	
+});
 
 
 
 
 /******Student Login***************/
 app.post("/l",function(req,res){
-	// var data={
-	// 	'student_id':7653,
-	// 	'name':"Bhanu Nadar",
-	// 	'email':"bhanu.nadar@gmail.com",
-	// 	'branch':"Comps",
-	// 	'rollno':7653,
-	// 	'contact':"7208755685",
-	// 	'password':"123"
-	// }
-	// res.render("website",{data:data,msg:"Love is blind"});
+	var data={
+		'student_id':7653,
+		'name':"Bhanu Nadar",
+		'email':"bhanu.nadar@gmail.com",
+		'branch':"Comps",
+		'rollno':7653,
+		'contact':"7208755685",
+		'password':"123"
+	}
+	res.render("website",{data:data,msg:"Love is blind"});
 	client.query('select * from student where password=$1',[req.body.password],function(err,result){
 		var data = result.rows[0];
 		if(result.rows.length==0)
@@ -94,20 +105,20 @@ app.post("/l",function(req,res){
 
 /********mentor login**********/
 app.post("/lmen",function(req,res){
-	// var data={
-	// 	'mentor_id':7653,
-	// 	'name':"Sunil Sir",
-	// 	'qual':"Phd "
-	// }
-	// var result1={
-	// 	"rows":[{"student_id":7653},
-	// 			{"student_id":7654}]
-	// }
-	// var result2={
-	// 	"rows":[{"student_id":7653},
-	// 			{"student_id":7654}]
-	// }
-	// res.render("mentor",{data:data,result1:result1,result2:result2});
+	var data={
+		'mentor_id':7653,
+		'name':"Sunil Sir",
+		'qual':"Phd "
+	}
+	var result1={
+		"rows":[{"student_id":7653},
+				{"student_id":7654}]
+	}
+	var result2={
+		"rows":[{"student_id":7653},
+				{"student_id":7654}]
+	}
+	res.render("mentor",{data:data,result1:result1,result2:result2});
 	client.query('select * from mentor where password=$1',[req.body.password],function(err,result){
 		var data = result.rows[0];
 		if(result.rows.length==0)
@@ -137,7 +148,10 @@ app.post('/am',function(req,res){
 
 /***html**********/
 app.post("/edit",function(req,res){
-	res.render("editProfile",{data:req.body.data});
+	console.log("yup");
+	console.log(req.body.name);
+	console.log(req.body.rollnumber);
+	res.render("editProfile",{data:req.body.name,roll:req.body.rollnumber});
 });
 app.get("/",function(req,res){
     res.render("index")

@@ -122,19 +122,22 @@
 	<script type="text/javascript">
 	
 	$(".edit").click(function(){
-		
+		console.log("hello");
 		var data=<%- JSON.stringify(data) %>;
 		console.log(data);
 		var form = $('<form></form>');
               form.attr("method", "post");
 			  form.attr("action", "/edit");
-			  var hiddenField = document.createElement("input");
-			  hiddenField.setAttribute("data",data);
-			  form.append(hiddenField);
+			  var name1 = document.createElement("input");
+			  name1.name="name";
+			  name1.value="<%=data.name%>";
+			  var rollnumber= document.createElement("input");
+			  rollnumber.name="rollnumber";
+			  rollnumber.value="<%=data.student_id%>";
+		      form.append(name1);
+			  form.append(rollnumber);
               $(document.body).append(form);
-              form.submit();
-               
-		
+              form.submit();	
 	});
 	</script>
 </html>
