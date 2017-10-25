@@ -108,20 +108,17 @@ app.post('/sm',function(req,res){
 app.post("/e",function(req,res){
 	console.log(req.body.name,req.body.password,req.body.email,req.body.roll);
 	client.query({
-		text:'update student set name=$1,password=$2,email=$3 where student_id=$4 values ($1,$2,$3,$4)',
-		values:[req.body.name,req.body.password,req.body.email,req.body.roll]
+		text : 'update student set name=$1,password=$2,email=$3 where student_id=$4',
+		values : [req.body.name,req.body.password,req.body.email,req.body.roll]
 	},function(err,result){
-		
+		console.log("in function");
 	});
-	
 });
 
 /******Student Login***************/
-app.post("/l",function(req,res){	
-	res.render("website",{data:data,msg:"Love is blind"});
+app.post("/l",function(req,res){
 	client.query('select * from student where password=$1',[req.body.password],function(err,result){
 		var data = result.rows[0];
-
 		if(result.rows.length==0)
 			res.render("failedlogin");
 		else{
@@ -139,7 +136,6 @@ app.post("/l",function(req,res){
 
 /********mentor login**********/
 app.post("/lmen",function(req,res){
-	res.render("mentor",{data:data,result1:result1,result2:result2});
 	client.query('select * from mentor where password=$1',[req.body.password],function(err,result){
 		var data = result.rows[0];
 		if(result.rows.length==0)
@@ -166,7 +162,6 @@ app.post('/am',function(req,res){
 
 /***html**********/
 app.post("/edit",function(req,res){
-	console.log("yup");
 	console.log(req.body.name);
 	console.log(req.body.rollnumber);
 	res.render("editProfile",{data:req.body.name,roll:req.body.rollnumber});
