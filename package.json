@@ -7,7 +7,8 @@
     "body-parser": "^1.18.2",
     "ejs": "^2.5.7",
     "express": "^4.15.5",
-    "html": "^1.0.0"
+    "html": "^1.0.0",
+    "sqlstring": "^2.3.0"
   },
   "devDependencies": {},
   "scripts": {

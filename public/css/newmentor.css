@@ -238,3 +238,9 @@ select#soflow-color {
   white-space: nowrap;
   width: 300px;
 }
+#logout{
+	float: right;
+	
+	text-shadow: 1px;
+	font-size: 20px;
+    }

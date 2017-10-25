@@ -1,20 +1,22 @@
 $(document).ready(function(){
     var prev_fs,current_fs,next_fs;
     $(".next").click(function(){
-         if($(this).hasClass('first')){ //Personal Detais checking form empty or Not
+
+         if($(this).hasClass('first')){ 
+             
+            //Personal Detais checking form empty or Not
              if(($(this).parent().children("#name").val().length===0)||($(this).parent().children("#surname").val().length===0)){
                  alert("Fields are empty"); //if condition by checking length 
                  console.log("inside if");
-                return false;
-             
-         }else{ //if not empty
-             console.log("inside else");
-        current_fs = $(this).parent();
-        next_fs = $(this).parent().next();
-        $("#signup").eq($("fieldset").index(next_fs)).addClass("active");
-        next_fs.show();
-        current_fs.hide();
-        }
+                 return false;   
+                }else{ //if not empty
+                    console.log("inside else");
+                    current_fs = $(this).parent();
+                    next_fs = $(this).parent().next();
+                    $("#signup").eq($("fieldset").index(next_fs)).addClass("active");
+                    next_fs.show();
+                    current_fs.hide();
+                }
      } 
     if($(this).hasClass('second')){//Academic checking form empty or Not
              console.log("inside second");
@@ -56,6 +58,7 @@ $(document).ready(function(){
     });
     $(".submit").click(function(){
         if($(this).hasClass('third')){
+            
         if(($(this).parent().children("#username").val().length===0)||($(this).parent().children("#pass1").val().length===0)){
             alert("Fields are empty");
             console.log("Inside empty");
@@ -74,8 +77,8 @@ $(document).ready(function(){
         }
     });
 
-    var quotes=["Every Great Achiever Inspired By a great Mentor",
-                "A mentor is someone who allows you to see hope inside yourself",
+    var quotes=["Every Great Achiever Inspired By a great Mentor"
+                
     ];
     var i=0;
     setInterval(function() {

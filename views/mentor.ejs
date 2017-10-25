@@ -7,13 +7,18 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 <script src="https://cdn.rawgit.com/mgalante/jquery.redirect/master/jquery.redirect.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
 <link href="css/newmentor.css" rel="stylesheet" media="all">
 </head>
 
 <body>
 <div class="wrap">
 <div id="teachergallery">
-
+  <div id=logout>  
+    <button type="button" class="btn btn-default btn-sm">
+    <span class="glyphicon glyphicon-log-out logout"></span> Log out
+    </button>
+</div>
 <h1><%=data.name%></h1>
 <h1><%=data.qual%></h1>
 <h2>Assistant Professor</h2> 
@@ -78,15 +83,17 @@ Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac tu
                 <textarea class="form-control" id="msg" name="msg" style="min-width: 100%" placeholder="message"></textarea>
           </div>
           <div class="modal-footer">
-            <input type="submit" value="Send" id="submit" name="submit" class="btn btn-primary">
+            <input type="submit" value="Send" id="submit" data-dismiss="modal" name="submit" class="btn btn-primary submitmsg">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
             <script type="text/javascript">
+            
               $("#submit").click(function(){
                 var rollno = $("#rollno").val();
                 var msg = $("#msg").val();
                 var mentor_id = <%-JSON.stringify(data.mentor_id)%>
                 var password = <%-JSON.stringify(data.password)%>
-                console.log(rollno+" "+msg)
+                console.log(rollno+" "+msg)                
+                alert("message sent successfully");   
                 $.post('/sm',{rollno:rollno,msg:msg},function(){
                   console.log("message sent..");
                   $.redirect('/lmen',{mentor_id:mentor_id,password:password});
@@ -98,4 +105,10 @@ Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac tu
       </div>
     </div> 
 </body>
+<script type="text/javascript">
+  $("#logout").click(function(){
+    window.location.href="/";
+   });
+   
+   </script>
 </html>

@@ -30,6 +30,7 @@
 												<br />
 												<i class="glyphicon glyphicon-phone"></i><%=data.contact%></p>
 												<input type="button" class="btn btn-info btn-sm inbox" data-toggle="modal" data-target="#myModal" value="Inbox">
+												<input type="button" class="btn btn-info btn-sm edit" value="Edit Profile">
 										</div>
 									</div>
 								</div>
@@ -41,6 +42,7 @@
 					<div id=logout>
 							
 							<button type="button" class="btn btn-default btn-sm">
+							
 							<span class="glyphicon glyphicon-log-out logout"></span> Log out
 							</button>
 					</div>
@@ -58,7 +60,6 @@
 						 <p><%=JSON.stringify(msg)%><p>
 					   </div>
 					   <div class="modal-footer">
-						 <input type="submit" value="Send" id="submit" name="submit" class="btn btn-primary">
 						   <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 					   </div>
 				   </div>
@@ -108,13 +109,32 @@
 				<div class="Location">
 				<h3>Share with Love</h3>
 				<ul class="footer-share">
-						<li><a href="#"><i class="fa fa-facebook"></i></a></li>
-						<li><a href="#"><i class="fa fa-twitter"></i></a></li>
-						<li><a href="#"><i class="fa fa-linkedin"></i></a></li>
-						<li><a href="#"><i class="fa fa-google-plus"></i></a></li>
+						<li><a href="http://facebook.com"><i class="fa fa-facebook"></i></a></li>
+						<li><a href="http://twitter.com"><i class="fa fa-twitter"></i></a></li>
+						<li><a href="http://linkedin.com"><i class="fa fa-linkedin"></i></a></li>
+						<li><a href="http://google.com"><i class="fa fa-google-plus"></i></a></li>
 				</ul>
 				</div>
 			</div>
 		</div>	
-    </body>
+	</body>
+	
+	<script type="text/javascript">
+	
+	$(".edit").click(function(){
+		
+		var data=<%- JSON.stringify(data) %>;
+		console.log(data);
+		var form = $('<form></form>');
+              form.attr("method", "post");
+			  form.attr("action", "/edit");
+			  var hiddenField = document.createElement("input");
+			  hiddenField.setAttribute("data",data);
+			  form.append(hiddenField);
+              $(document.body).append(form);
+              form.submit();
+               
+		
+	});
+	</script>
 </html>

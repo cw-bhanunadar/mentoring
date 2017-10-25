@@ -15,7 +15,7 @@ $(document).on('click','a#forgot',function(e){
     
   });
   function myFunction(){
-      if(document.getElementById("name").value=="" ||document.getElementById("email").value=="")
+      if(document.getElementById("name").value=="" ||document.getElementById("rollnumber").value=="")
         alert("Empty filed!!")
       else
       alert("Password sent to your email");
