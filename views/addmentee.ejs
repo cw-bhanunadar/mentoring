@@ -2,12 +2,19 @@
 <html>
 <head>
 	<title>Added Mentee</title>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script type="text/javascript" src="https://cdn.rawgit.com/mgalante/jquery.redirect/master/jquery.redirect.js"></script>
 </head>
 <body>
-	<h1> Mentee <%=student_id%> Added Sucessfully in your list... </h1>
-	<button id="btn">Press to Go back </button>
+	<h1> Mentee Added Sucessfully in your list... </h1><br>
+	<button id="goback">Press to Go back </button>
 	<script type="text/javascript">
-		
+		$("#goback").click(function(){
+			var mentor_id = <%- JSON.stringify(mentor_id) %>
+			var password = <%- JSON.stringify(password) %>
+			console.log(mentor_id+" "+password);
+			$.redirect('/lmen',{mentor_id:mentor_id,password:password})
+		});
 	</script>
 </body>
 </html>
