@@ -52,6 +52,7 @@ Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac tu
 <form class="mentee" action='/am' method="post">
     <h1>Add Mentees in List</h1>
     <input type="hidden" name="mentor_id" value="<%=data.mentor_id%>">
+    <input type="hidden" name="password" value="<%=data.password%>">
       <select name="student_id" id="soflow">
         <%for(var i in result1.rows){%>
         <option value= "<%=result1['rows'][i]['student_id']%>" > <%=result1['rows'][i]['student_id']%> </option>

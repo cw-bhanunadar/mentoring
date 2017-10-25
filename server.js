@@ -107,7 +107,7 @@ app.post("/lmen",function(req,res){
 app.post('/am',function(req,res){
 	console.log(req.body.mentor_id,req.body.student_id);
 	client.query('update student set mentor_id=$1 where student_id=$2',[req.body.mentor_id,req.body.student_id],function(req,result){
-		res.redirect("/ml");
+		res.redirect('/ml');
 	});
 });
 
