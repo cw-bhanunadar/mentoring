@@ -1,31 +1,76 @@
 const pg = require('pg');
 const express = require('express');
 const bodyParser = require("body-parser");
+const nodeMailer = require("nodemailer");
 const path = require('path');
-var SqlString = require('sqlstring');
+const sqlString = require('sqlstring');
+
 var app = express();
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(express.static("public"));
 app.set("view engine","ejs");
-
-//TO stop forward button to access website further
-// app.use(function(req, res, next) {
-// 	res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-// 	res.setHeader('Pragma', 'no-cache');
-// 	res.setHeader('Expires', '0');
-// 	next();
-// });
 
 var conn = 'postgres://postgres:123456@localhost:5432/wt';
 var client = new pg.Client(conn);
 if(client.connect()) console.log('Successfully Connected..');
 else console.log('Connection Unsuccessful..');
 
+/*****************Recover Password***************/
+app.post('/rp',function(req,ress){
+	console.log('in rp');
+	client.query('select email from student where student_id=$1',[req.body.student_id],function(err,result){
+		console.log('in select query');
+		if(err) console.log(err);
+		else if (result.rows.length==0){
+			console.log("No such user");
+			res.redirect('/');
+		}
+		else{
+			var data = result.rows[0].email;
+			var pw = Math.floor((Math.random()*9800)+1000);
+			var smtpTransport = nodeMailer.createTransport({
+			host: 'smtp.gmail.com',
+			port: 587,
+			secure: false,
+			requireTLS: true,
+				auth: {
+					user : 'redballonrock@gmail.com',
+					pass : 'Bhanu@123'			        
+				}
+			});
+			var mail = {
+				from : "redballonrock@gmail.com",
+				to : data,
+				subject : "Reset Password",
+				text : "Your new password is " + pw
+			};
+			smtpTransport.sendMail(mail,function(err,res){
+				if(err)
+					console.log(err);
+				else
+				{
+					client.query('update student set password=$1 where student_id=$2',[pw,req.body.student_id],function(err,result){
+						console.log("password updated");
+						console.log("message sent");
+						ress.redirect('/');
+					});
+				}
+				smtpTransport.close();
+			});
+		}
+	});
+});
 
 
 /**********Questionnaires************/
-app.post('/q',function(req,res){
-	console.log(req.body.avg);
+var student_id=0;
+app.post('/ia',function(req,res){
+	console.log(student_id);
+	client.query('update rating set iarating=$1 where student_id=$2',[req.body.avg,student_id],function(err,result){});
+});
+app.post('/cs',function(req,res){
+	console.log(student_id);
+	client.query('update rating set csrating=$1 where student_id=$2',[req.body.avg,student_id],function(err,result){});
 });
 app.get('/instructionaffectiveness',function(req,res){
 	res.render("instructionaffectiveness");
@@ -55,8 +100,8 @@ app.post("/s",function(req,res){
 
 /********Send And Receive Messages*************/
 app.post('/sm',function(req,res){
-	client.query('update msg set msg=$1 where student_id=$2',[req.body.msg,req.body.rollno],function(err,result){
-		console.log("sent message " + req.body.msg + "to " + req.body.rollno);
+	client.query('update msg set msg=$1 where student_id=$2',[req.body.msg,req.body.student_id],function(err,result){
+		console.log("sent message " + req.body.msg + "to " + req.body.student_id);
 	});
 });
 /*************Edit Profile **********/
@@ -71,28 +116,17 @@ app.post("/e",function(req,res){
 	
 });
 
-
-
-
 /******Student Login***************/
-app.post("/l",function(req,res){
-	var data={
-		'student_id':7653,
-		'name':"Bhanu Nadar",
-		'email':"bhanu.nadar@gmail.com",
-		'branch':"Comps",
-		'rollno':7653,
-		'contact':"7208755685",
-		'password':"123"
-	}
+app.post("/l",function(req,res){	
 	res.render("website",{data:data,msg:"Love is blind"});
 	client.query('select * from student where password=$1',[req.body.password],function(err,result){
 		var data = result.rows[0];
+
 		if(result.rows.length==0)
 			res.render("failedlogin");
 		else{
-			if(req.body.student_id==data.student_id)
-			{
+			if(req.body.student_id==data.student_id){	
+				student_id=data.student_id;
 				client.query('select msg from msg where student_id=$1',[req.body.student_id],function(err,result){
 					res.render("website",{data:data,msg:result.rows[0].msg});
 				});
@@ -105,19 +139,6 @@ app.post("/l",function(req,res){
 
 /********mentor login**********/
 app.post("/lmen",function(req,res){
-	var data={
-		'mentor_id':7653,
-		'name':"Sunil Sir",
-		'qual':"Phd "
-	}
-	var result1={
-		"rows":[{"student_id":7653},
-				{"student_id":7654}]
-	}
-	var result2={
-		"rows":[{"student_id":7653},
-				{"student_id":7654}]
-	}
 	res.render("mentor",{data:data,result1:result1,result2:result2});
 	client.query('select * from mentor where password=$1',[req.body.password],function(err,result){
 		var data = result.rows[0];
@@ -137,13 +158,10 @@ app.post("/lmen",function(req,res){
 	});
 });
 
-
 /****************Add Mentee****************/
 app.post('/am',function(req,res){
 	console.log(req.body.mentor_id,req.body.student_id);
-	client.query('update student set mentor_id=$1 where student_id=$2',[req.body.mentor_id,req.body.student_id],function(req,result){
-		res.redirect('/ml');
-	});
+	client.query('update student set mentor_id=$1 where student_id=$2',[req.body.mentor_id,req.body.student_id],function(err,result){});
 });
 
 /***html**********/

@@ -58,9 +58,6 @@
                          </fieldset>
                          <% } %>
                     </div>
-                    <div class="goBackdiv">
-                        <button type="button" class="btn btn-lg btn-primary goBack">Go To Profile</button>
-                    </div>
               <script type="text/javascript">
                 var avg = 0;
                 $(".submit").click(function(){
@@ -71,18 +68,11 @@
                     avg = avg / (i-1);
                     console.log(avg);
                     alert("Survey submitted\n");
-                    $.post('/q',{avg:avg},function(){
+                    $.post('/cs',{avg:avg},function(){
                             windows.location.href="/";
                     }
                 );
-                });
-                $(".goBack").click(function(){                        
-                    var form = $('<form></form>');
-                    form.attr("method", "post");
-                    form.attr("action", "/l");
-                    $(document.body).append(form);
-                    form.submit();
-                });          
+                });     
               </script>
             </div>
         </body>
