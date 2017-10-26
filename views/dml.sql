@@ -1,0 +1,13 @@
+'select email from student where student_id=$1',[req.body.student_id];
+'update student set password=$1 where student_id=$2',[pw,req.body.student_id];
+'update rating set iarating=$1 where student_id=$2',[req.body.avg,student_id];
+'update rating set csrating=$1 where student_id=$2',[req.body.avg,student_id];
+'insert into student (student_id,name,email,branch,rollno,contact,password) values ($1,$2,$3,$4,$5,$6,$7)';
+'update msg set msg=$1 where student_id=$2',[req.body.msg,req.body.student_id];
+'update student set name=$1,password=$2,email=$3 where student_id=$4';
+'select * from student where password=$1',[req.body.password];
+'select msg from msg where student_id=$1',[req.body.student_id];
+'select * from mentor where password=$1',[req.body.password];
+'select student_id from student where mentor_id is null';
+'select student_id from student where mentor_id=$1',[req.body.mentor_id];
+'update student set mentor_id=$1 where student_id=$2',[req.body.mentor_id,req.body.student_id];
